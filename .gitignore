@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+
+# Downloaded speech and wake-word models
+*.onnx
+*.tflite
+*.bin
+*.pt
+models/
+
+# Runtime data (lives in %APPDATA%\Aura, never in the repo)
+config.yaml
+!aura/default_config.yaml
+audit.jsonl
+state.json
+*.log
+brain-sandbox/
+
+# Leftovers
+*.bak
+*.bak.*
+*.tmp
+.env
+.env.*

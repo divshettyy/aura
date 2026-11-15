@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aura-assistant"
+version = "1.0.0"
+description = "Voice-controlled, automated, locally-secured laptop assistant for Windows"
+requires-python = ">=3.10"
+dependencies = [
+  "pyyaml>=6",
+  "numpy>=1.24",
+  "psutil>=5.9",
+  "keyring>=24",
+  "anthropic>=2.8",
+  "faster-whisper>=1.0",
+  "openwakeword>=0.6",
+  "onnxruntime>=1.16",
+  "sounddevice>=0.4.6",
+  "pywin32>=306; sys_platform == 'win32'",
+  "pycaw>=20230407; sys_platform == 'win32'",
+  "comtypes>=1.2; sys_platform == 'win32'",
+  "screen-brightness-control>=0.22; sys_platform == 'win32'",
+  "pillow>=10; sys_platform == 'win32'",
+  "pyperclip>=1.8; sys_platform == 'win32'",
+  "send2trash>=1.8; sys_platform == 'win32'",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+aura = "aura.__main__:main"
+
+[tool.setuptools]
+packages = ["aura", "aura.brain", "aura.voice", "aura.skills", "aura.platform"]
+
+[tool.setuptools.package-data]
+aura = ["default_config.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
