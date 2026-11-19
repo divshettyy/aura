@@ -147,6 +147,66 @@ print(s.readline())  # expected: b'OK\r\n'
 
 ---
 
+## Alternative: Remove Nokia 3210 from the Picture
+
+Without the Nokia 3210, the GSM call path and all its complexity (AT commands, audio routing, phone numbers, billing) disappears. Easier options exist.
+
+### Option 1 — ESP32 + INMP441 microphone (~₹450) ★ Recommended
+
+This is the exact YouTube ESP32 voice project pattern.
+
+```
+Press button on ESP32
+→ records voice via I2S microphone to memory
+→ release button → sends WAV file over WiFi to laptop Flask server
+→ Whisper STT on laptop
+→ Claude / Gemini API processes idea
+→ response saved to dated text file
+→ user reads on laptop
+```
+
+- No phone number, no SIM, no call cost
+- Works anywhere with WiFi (home, office)
+- Away from WiFi: add a Jio MiFi router (~₹500) as hotspot, ESP32 connects to it
+- **Total cost: ₹450 hardware only, or ₹950 with MiFi for away-from-home use**
+
+**Parts:**
+| Part | Price |
+|---|---|
+| ESP32 DevKit | ₹250–350 |
+| INMP441 I2S microphone module | ₹100–150 |
+| Push button + wires | ₹20 |
+
+### Option 2 — XIAO ESP32-S3 Sense (~₹800)
+
+Onboard microphone, no extra parts. Smaller than a matchbox. Same WiFi + WAV send flow.
+
+### Option 3 — Raspberry Pi Zero 2W (~₹1500)
+
+Full Linux, runs Python directly, USB mic. Overkill for simple voice capture but most flexible.
+
+### Option 4 — Cheap Android phone (~₹3000–5000)
+
+Termux + Python. Sends audio over WiFi or mobile data. Telegram bot or HTTP POST to server. Most capable but highest cost.
+
+### Option 5 — Laptop mic + hotkey (zero cost)
+
+Aura already does this locally (Ctrl+Alt+J → speak). Only gap: not usable when physically away from laptop.
+
+### Comparison
+
+| Option | Cost | Away from WiFi | Complexity | Matches YouTube projects |
+|---|---|---|---|---|
+| ESP32 + INMP441 | ₹450 | Need MiFi (₹500) | Low | Yes, exactly |
+| XIAO ESP32-S3 Sense | ₹800 | Need MiFi | Very low | Yes |
+| Nokia 3210 + SIM800L | ₹500–700 + call cost | Yes (GSM) | High | No |
+| Cheap Android | ₹3000+ | Uses mobile data | Medium | Partially |
+| Laptop mic only | ₹0 | No (at laptop) | None | N/A |
+
+**Verdict:** ESP32 + INMP441 + home WiFi = ₹450, buildable in a weekend. Add ₹500 Jio MiFi for away-from-home use. Nokia/SIM800L path only makes sense if you already own the Nokia and want zero extra hardware spend.
+
+---
+
 ## References
 
 - SIM800L datasheet AT command reference: `AT+CLIP=1` (caller ID), `ATA` (answer), `ATH` (hang up)
