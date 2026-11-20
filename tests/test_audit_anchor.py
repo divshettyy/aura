@@ -1,4 +1,5 @@
 """Head anchor: removal of lines from the end of the audit log is detected."""
+
 import json
 
 from aura import audit
@@ -134,8 +135,8 @@ def test_log_asks_the_store_to_load_ahead_of_the_first_record(tmp_path):
 
     store = PreloadingStore()
     path = _log(tmp_path, store)
-    assert store.preloads == 1                       # once, when the log is opened
-    assert audit.verify(path, store=store)[0]        # and the anchor is still written with every entry
+    assert store.preloads == 1  # once, when the log is opened
+    assert audit.verify(path, store=store)[0]  # and the anchor is still written with every entry
     assert json.loads(store.data[audit._anchor_key(path)])["count"] == 3
 
 
@@ -156,5 +157,8 @@ def test_keyring_backend_is_named_on_windows_only_and_never_overrides_the_user(m
     assert __import__("os").environ["PYTHON_KEYRING_BACKEND"] == "my.own.Backend"
     monkeypatch.delenv("PYTHON_KEYRING_BACKEND")
     secrets.keyring_module()
-    assert __import__("os").environ["PYTHON_KEYRING_BACKEND"] == "keyring.backends.Windows.WinVaultKeyring"
+    assert (
+        __import__("os").environ["PYTHON_KEYRING_BACKEND"]
+        == "keyring.backends.Windows.WinVaultKeyring"
+    )
     monkeypatch.delenv("PYTHON_KEYRING_BACKEND")

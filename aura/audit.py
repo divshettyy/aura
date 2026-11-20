@@ -4,6 +4,7 @@ The chain alone cannot show that lines were cut off the end (what is left is sti
 chain), so the entry count and the newest hash - the "head anchor" - are also kept outside the
 file, in the system credential store. `verify` compares the file against that anchor.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -120,7 +121,9 @@ class AuditLog:
         if self._store is None:
             return
         try:
-            self._store.set(_anchor_key(self.path), json.dumps({"count": self._count, "tip": self._last}))
+            self._store.set(
+                _anchor_key(self.path), json.dumps({"count": self._count, "tip": self._last})
+            )
         except Exception:
             pass
 
@@ -135,7 +138,9 @@ def verify(path: Path, store=_DEFAULT) -> tuple[bool, str]:
             return False, f"audit log file is missing, but {anchor_count} entries were recorded"
         return True, "no audit log yet"
     prev, hashes = GENESIS, []
-    for number, line in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+    for number, line in enumerate(
+        path.read_text(encoding="utf-8", errors="replace").splitlines(), 1
+    ):
         if not line.strip():
             continue
         try:
@@ -150,14 +155,26 @@ def verify(path: Path, store=_DEFAULT) -> tuple[bool, str]:
         hashes.append(prev)
     count = len(hashes)
     if state == "unavailable":
-        return True, f"{count} entries, chain intact (head anchor unavailable: removal from the end is not checked)"
+        return (
+            True,
+            f"{count} entries, chain intact (head anchor unavailable: removal from the end is not checked)",
+        )
     if state == "none":
-        return True, f"{count} entries, chain intact (no head anchor yet: it is created with the next entry)"
+        return (
+            True,
+            f"{count} entries, chain intact (no head anchor yet: it is created with the next entry)",
+        )
     if count < anchor_count:
         missing = anchor_count - count
-        return False, f"audit log was truncated: {missing} {'entry' if missing == 1 else 'entries'} missing from the end"
+        return (
+            False,
+            f"audit log was truncated: {missing} {'entry' if missing == 1 else 'entries'} missing from the end",
+        )
     # The file may be ahead of the anchor (an anchor write failed or was interrupted); the entry
     # the anchor points at must still be the one that was recorded.
     if anchor_count > 0 and hashes[anchor_count - 1] != anchor_tip:
-        return False, f"audit log does not match its head anchor at entry {anchor_count} (the end was replaced)"
+        return (
+            False,
+            f"audit log does not match its head anchor at entry {anchor_count} (the end was replaced)",
+        )
     return True, f"{count} entries, chain intact"

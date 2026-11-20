@@ -1,4 +1,5 @@
 """Secrets live in the OS credential store (Windows Credential Manager), never in files."""
+
 from __future__ import annotations
 
 import os

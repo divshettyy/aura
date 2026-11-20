@@ -1,4 +1,5 @@
 """Hotkey fallback and microphone health: failures must be reported, never silent."""
+
 import sys
 
 import pytest
@@ -44,7 +45,9 @@ def test_fallback_never_steals_the_other_configured_hotkey():
 
 
 def test_muted_microphone_is_a_failure():
-    good, text = cli._microphone_verdict({"name": "Microphone Array (Intel® Smart Sound)", "muted": True, "level": 70})
+    good, text = cli._microphone_verdict(
+        {"name": "Microphone Array (Intel® Smart Sound)", "muted": True, "level": 70}
+    )
     assert not good and "MUTED" in text and "Intel® Smart Sound" in text
 
 
@@ -109,5 +112,5 @@ def test_once_does_not_keep_a_spare_claude_warm(hub, monkeypatch, capsys):
     assert capsys.readouterr().out.strip()
 
     hub.cfg["brain"]["keep_warm"] = True
-    cli._text_hub()                                  # text mode has later requests: stays warm
+    cli._text_hub()  # text mode has later requests: stays warm
     assert seen["keep_warm"] is True

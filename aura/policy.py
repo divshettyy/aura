@@ -8,6 +8,7 @@ Once a turn has read content Aura did not author (a file, a web page, clipboard)
 that turn is "tainted": anything that could act on hidden instructions in that
 content is moved up one level.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

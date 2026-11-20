@@ -1,4 +1,5 @@
 """Stand-in platform for non-Windows machines and tests: records calls instead of acting."""
+
 from __future__ import annotations
 
 

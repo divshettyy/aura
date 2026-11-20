@@ -1,4 +1,5 @@
 """Calculator, dates, stopwatch, window control, dark mode, Recycle Bin and the fuller status."""
+
 import datetime as dt
 
 import pytest
@@ -15,21 +16,48 @@ def run(hub, name, args=None, turn=None):
 
 
 # ---- calculate ------------------------------------------------------------
-@pytest.mark.parametrize("expression, answer", [
-    ("7 * 8", "56"), ("(2 + 3) * 4", "20"), ("10 / 4", "2.5"), ("2 ^ 10", "1024"), ("17 % 5", "2"),
-    ("sqrt(144)", "12"), ("1,200 * 3", "3600"), ("max(3, 9)", "9"), ("round(pi, 2)", "3.14"),
-    ("15 / 100 * 80", "12"), ("-5 + 2", "-3"),
-])
+@pytest.mark.parametrize(
+    "expression, answer",
+    [
+        ("7 * 8", "56"),
+        ("(2 + 3) * 4", "20"),
+        ("10 / 4", "2.5"),
+        ("2 ^ 10", "1024"),
+        ("17 % 5", "2"),
+        ("sqrt(144)", "12"),
+        ("1,200 * 3", "3600"),
+        ("max(3, 9)", "9"),
+        ("round(pi, 2)", "3.14"),
+        ("15 / 100 * 80", "12"),
+        ("-5 + 2", "-3"),
+    ],
+)
 def test_calculate(hub, expression, answer):
     result = run(hub, "calculate", {"expression": expression})
     assert result.ok and result.text == f"That is {answer}" and not result.untrusted
 
 
-@pytest.mark.parametrize("expression", [
-    "__import__('os').system('calc')", "open('x')", "(1).__class__", "x + 1", "[1, 2]", "'a' * 5",
-    "lambda: 1", "1 if 1 else 2", "9 ** 9 ** 9", "10 ** 400", "1 / 0", "", "2 +", "sqrt(-1)",
-    "abs(x=1)", "1" + "+1" * 150,
-])
+@pytest.mark.parametrize(
+    "expression",
+    [
+        "__import__('os').system('calc')",
+        "open('x')",
+        "(1).__class__",
+        "x + 1",
+        "[1, 2]",
+        "'a' * 5",
+        "lambda: 1",
+        "1 if 1 else 2",
+        "9 ** 9 ** 9",
+        "10 ** 400",
+        "1 / 0",
+        "",
+        "2 +",
+        "sqrt(-1)",
+        "abs(x=1)",
+        "1" + "+1" * 150,
+    ],
+)
 def test_calculate_refuses_everything_but_arithmetic(hub, expression):
     result = run(hub, "calculate", {"expression": expression})
     assert not result.ok
@@ -61,7 +89,10 @@ def test_stopwatch(hub, monkeypatch):
     now[0] += 125
     assert run(hub, "stopwatch", {"action": "check"}).text == "Stopwatch at 2 minutes 5 seconds"
     now[0] += 3600
-    assert run(hub, "stopwatch", {"action": "stop"}).text == "Stopwatch stopped at 1 hour 2 minutes 5 seconds"
+    assert (
+        run(hub, "stopwatch", {"action": "stop"}).text
+        == "Stopwatch stopped at 1 hour 2 minutes 5 seconds"
+    )
     assert not run(hub, "stopwatch", {"action": "stop"}).ok
     assert not run(hub, "stopwatch", {"action": "reset"}).ok  # not one of the declared actions
 
@@ -70,10 +101,18 @@ def test_stopwatch(hub, monkeypatch):
 def test_window_actions(hub):
     for action in ("minimize", "maximize", "restore", "show_desktop", "snap_left", "snap_right"):
         assert run(hub, "window", {"action": action}).ok
-    assert [c[1] for c in calls(hub, "window")] == ["minimize", "maximize", "restore", "show_desktop",
-                                                    "snap_left", "snap_right"]
-    assert not run(hub, "window", {"action": "close"}).ok          # closing stays with close_app (confirm)
-    assert not run(hub, "window", {"action": "minimize", "key": 91}).ok  # no key code can be passed in
+    assert [c[1] for c in calls(hub, "window")] == [
+        "minimize",
+        "maximize",
+        "restore",
+        "show_desktop",
+        "snap_left",
+        "snap_right",
+    ]
+    assert not run(hub, "window", {"action": "close"}).ok  # closing stays with close_app (confirm)
+    assert not run(
+        hub, "window", {"action": "minimize", "key": 91}
+    ).ok  # no key code can be passed in
     assert len(calls(hub, "window")) == 6
 
 
@@ -95,10 +134,12 @@ def test_dark_mode(hub):
 
 # ---- Recycle Bin: critical, so a voice alone can never approve it ---------
 def test_empty_recycle_bin_needs_the_dialog(hub):
-    hub.voice_answer = True                 # a voice saying yes is not enough
+    hub.voice_answer = True  # a voice saying yes is not enough
     hub.platform.dialog_answer = False
     assert not run(hub, "empty_recycle_bin").ok
-    assert calls(hub, "dialog") and not calls(hub, "empty_recycle_bin") and hub.platform.recycled == 3
+    assert (
+        calls(hub, "dialog") and not calls(hub, "empty_recycle_bin") and hub.platform.recycled == 3
+    )
     assert "Permanently delete" in calls(hub, "dialog")[-1][1]
     hub.platform.dialog_answer = True
     assert "3 items" in run(hub, "empty_recycle_bin").text and hub.platform.recycled == 0
@@ -134,15 +175,24 @@ def test_new_tools_and_taint(hub):
     assert run(hub, "window", {"action": "minimize"}, turn).ok
     assert len(hub.asked) == asked
     clean = Turn("voice")
-    for name, args in (("calculate", {"expression": "1 + 1"}), ("date_info", {}), ("dark_mode", {"on": True}),
-                       ("window", {"action": "restore"}), ("stopwatch", {"action": "start"})):
+    for name, args in (
+        ("calculate", {"expression": "1 + 1"}),
+        ("date_info", {}),
+        ("dark_mode", {"on": True}),
+        ("window", {"action": "restore"}),
+        ("stopwatch", {"action": "start"}),
+    ):
         assert run(hub, name, args, clean).ok
     assert not clean.tainted
 
 
 def test_locked_laptop_refuses_new_tools(hub):
     hub.platform.locked = True
-    for name, args in (("window", {"action": "show_desktop"}), ("dark_mode", {"on": True}), ("empty_recycle_bin", {})):
+    for name, args in (
+        ("window", {"action": "show_desktop"}),
+        ("dark_mode", {"on": True}),
+        ("empty_recycle_bin", {}),
+    ):
         assert not run(hub, name, args).ok
     assert not calls(hub, "window") and not calls(hub, "dark_mode") and hub.platform.recycled == 3
 
@@ -153,7 +203,10 @@ def test_system_status_has_disk_volume_and_battery_time(hub, monkeypatch):
     assert "Disk 120 of 475 gigabytes free" in text and "Volume 50 percent" in text
     assert "left" not in text  # the stub is charging: no time-left estimate while plugged in
     monkeypatch.setattr(hub.platform, "battery", lambda: (41, False))
-    assert "Battery 41 percent, on battery, about 2 hours 15 minutes left" in run(hub, "system_status").text
+    assert (
+        "Battery 41 percent, on battery, about 2 hours 15 minutes left"
+        in run(hub, "system_status").text
+    )
     monkeypatch.setattr(hub.platform, "battery_minutes", lambda: None)
     monkeypatch.setattr(hub.platform, "disk_free", lambda: None)
     text = run(hub, "system_status").text
@@ -165,7 +218,9 @@ def test_catalogue_stays_short(hub):
         assert len(tool.description) <= 110, tool.name
 
 
-@pytest.mark.parametrize("expression", ["round(7, -16000000)", "round(5, -999999999999999)", "round(2.5, 99)"])
+@pytest.mark.parametrize(
+    "expression", ["round(7, -16000000)", "round(5, -999999999999999)", "round(2.5, 99)"]
+)
 def test_calculate_round_cannot_run_for_minutes(hub, expression):
     import time
 
@@ -177,4 +232,3 @@ def test_calculate_round_cannot_run_for_minutes(hub, expression):
 def test_brightness_change_moves_from_the_current_level(hub):
     assert run(hub, "brightness_change", {"delta": -10}).ok
     assert ("brightness", 40) in hub.platform.calls
-

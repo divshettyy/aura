@@ -1,11 +1,11 @@
 """Routines (named step lists) and rules (steps that fire on an event or at a clock time)."""
+
 from __future__ import annotations
 
 import datetime as dt
 import difflib
 import logging
 import threading
-import time
 
 from .policy import Turn
 from .tools import ToolError
@@ -27,7 +27,9 @@ class Automation:
         self._stop = threading.Event()
         for rule in hub.cfg["rules"]:
             if "event" in rule:
-                hub.bus.subscribe(rule["event"], lambda topic, data, r=rule: self._run_rule(r, data))
+                hub.bus.subscribe(
+                    rule["event"], lambda topic, data, r=rule: self._run_rule(r, data)
+                )
 
     # validation ------------------------------------------------------
     def problems(self) -> list[str]:
@@ -98,7 +100,11 @@ class Automation:
             if "say" in step:
                 spoken.append(str(step["say"]).format_map(_Blank(data)))
             elif "routine" in step:
-                spoken.append(self.run_steps(self.hub.cfg["routines"].get(step["routine"]), data, depth + 1, turn))
+                spoken.append(
+                    self.run_steps(
+                        self.hub.cfg["routines"].get(step["routine"]), data, depth + 1, turn
+                    )
+                )
             elif "tool" in step:
                 result = self.hub.run_tool(step["tool"], step.get("args") or {}, turn)
                 if step.get("speak") or not result.ok:
@@ -126,7 +132,11 @@ class Automation:
             due = dt.time.fromisoformat(str(rule["at"]))
             days = rule.get("days") or DAYS
             key = f"{index} {stamp}"
-            if (now.hour, now.minute) == (due.hour, due.minute) and DAYS[now.weekday()] in days and key not in self._fired:
+            if (
+                (now.hour, now.minute) == (due.hour, due.minute)
+                and DAYS[now.weekday()] in days
+                and key not in self._fired
+            ):
                 self._fired = {k for k in self._fired if k.endswith(stamp)} | {key}
                 self._run_rule(rule, {})
         battery = self.hub.platform.battery()

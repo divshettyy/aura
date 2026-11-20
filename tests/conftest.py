@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 
@@ -13,7 +11,9 @@ def hub(tmp_path, monkeypatch):
     cfg = config.load()
     docs = tmp_path / "docs"
     docs.mkdir()
-    cfg["files"].update(roots=[str(docs)], notes_dir=str(docs / "notes"), screenshots_dir=str(docs / "shots"))
+    cfg["files"].update(
+        roots=[str(docs)], notes_dir=str(docs / "notes"), screenshots_dir=str(docs / "shots")
+    )
     h = Hub(cfg=cfg, platform=StubPlatform())
     h.docs = docs
     h.spoken = []

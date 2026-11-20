@@ -1,4 +1,5 @@
 """Configuration: built-in defaults merged with the user's config.yaml."""
+
 from __future__ import annotations
 
 import copy

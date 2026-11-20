@@ -1,4 +1,5 @@
 """Shared memory: a small SQLite store every skill reads and writes."""
+
 from __future__ import annotations
 
 import json
@@ -40,18 +41,29 @@ class State:
     # reminders ---------------------------------------------------------
     def add_reminder(self, due: float, text: str) -> int:
         with self._lock, self._db:
-            return self._db.execute("INSERT INTO reminders (due, text) VALUES (?,?)", (due, text)).lastrowid
+            return self._db.execute(
+                "INSERT INTO reminders (due, text) VALUES (?,?)", (due, text)
+            ).lastrowid
 
     def pending_reminders(self) -> list[tuple[int, float, str]]:
         with self._lock:
-            return self._db.execute("SELECT id, due, text FROM reminders WHERE done=0 ORDER BY due").fetchall()
+            return self._db.execute(
+                "SELECT id, due, text FROM reminders WHERE done=0 ORDER BY due"
+            ).fetchall()
 
     def take_due_reminders(self, now: float) -> list[tuple[int, float, str]]:
         with self._lock, self._db:
-            rows = self._db.execute("SELECT id, due, text FROM reminders WHERE done=0 AND due<=?", (now,)).fetchall()
+            rows = self._db.execute(
+                "SELECT id, due, text FROM reminders WHERE done=0 AND due<=?", (now,)
+            ).fetchall()
             self._db.executemany("UPDATE reminders SET done=1 WHERE id=?", [(r[0],) for r in rows])
         return rows
 
     def cancel_reminder(self, reminder_id: int) -> bool:
         with self._lock, self._db:
-            return self._db.execute("UPDATE reminders SET done=1 WHERE id=? AND done=0", (reminder_id,)).rowcount > 0
+            return (
+                self._db.execute(
+                    "UPDATE reminders SET done=1 WHERE id=? AND done=0", (reminder_id,)
+                ).rowcount
+                > 0
+            )

@@ -1,9 +1,9 @@
 """Apps, sound, screen, power, keyboard and clipboard."""
+
 from __future__ import annotations
 
-import re
-
 import difflib
+import re
 import time
 
 from ..config import expand
@@ -40,7 +40,9 @@ def open_app(hub, name: str) -> str:
 def close_app(hub, name: str) -> str:
     found, spec = _resolve_app(hub, name)
     if not spec.get("process"):
-        raise ToolError(f"I don't know which process belongs to {found}; add 'process' for it in the config")
+        raise ToolError(
+            f"I don't know which process belongs to {found}; add 'process' for it in the config"
+        )
     count = hub.platform.close_process(spec["process"])
     return f"Closed {found}" if count else f"{found} wasn't running"
 
@@ -98,15 +100,23 @@ def system_status(hub, about: str = "all") -> str:
         return f"Connected to Wi-Fi {wifi}" if wifi else "Wi-Fi is not connected"
     if about == "disk":
         disk = hub.platform.disk_free()
-        return f"{disk[0]} of {disk[1]} gigabytes free" if disk else "I couldn't read the disk space"
+        return (
+            f"{disk[0]} of {disk[1]} gigabytes free" if disk else "I couldn't read the disk space"
+        )
     parts = []
     battery = hub.platform.battery()
     if about == "battery" and not battery:
         return "This computer has no battery"
     if battery:
         left = hub.platform.battery_minutes()
-        remaining = f", about {left // 60} hours {left % 60} minutes left" if left and not battery[1] else ""
-        parts.append(f"Battery {battery[0]} percent, {'charging' if battery[1] else 'on battery'}{remaining}")
+        remaining = (
+            f", about {left // 60} hours {left % 60} minutes left"
+            if left and not battery[1]
+            else ""
+        )
+        parts.append(
+            f"Battery {battery[0]} percent, {'charging' if battery[1] else 'on battery'}{remaining}"
+        )
         if about == "battery":
             return parts[0]
     wifi = re.sub(r"[^\w .-]", "", hub.platform.wifi_name() or "")[:32]
@@ -114,7 +124,9 @@ def system_status(hub, about: str = "all") -> str:
     try:
         import psutil
 
-        parts.append(f"CPU {round(psutil.cpu_percent(interval=0.2))} percent, memory {round(psutil.virtual_memory().percent)} percent")
+        parts.append(
+            f"CPU {round(psutil.cpu_percent(interval=0.2))} percent, memory {round(psutil.virtual_memory().percent)} percent"
+        )
     except ImportError:
         pass
     disk = hub.platform.disk_free()
@@ -124,8 +136,14 @@ def system_status(hub, about: str = "all") -> str:
     return ". ".join(parts)
 
 
-WINDOW_DONE = {"minimize": "Minimised", "maximize": "Maximised", "restore": "Restored", "show_desktop": "Showing the desktop",
-               "snap_left": "Snapped left", "snap_right": "Snapped right"}
+WINDOW_DONE = {
+    "minimize": "Minimised",
+    "maximize": "Maximised",
+    "restore": "Restored",
+    "show_desktop": "Showing the desktop",
+    "snap_left": "Snapped left",
+    "snap_right": "Snapped right",
+}
 
 
 def window(hub, action: str) -> str:
@@ -150,7 +168,11 @@ def empty_recycle_bin(hub) -> str:
 
 def power(hub, action: str) -> str:
     hub.platform.power(action)
-    return {"sleep": "Going to sleep", "shutdown": "Shutting down in 30 seconds", "restart": "Restarting in 30 seconds"}[action]
+    return {
+        "sleep": "Going to sleep",
+        "shutdown": "Shutting down in 30 seconds",
+        "restart": "Restarting in 30 seconds",
+    }[action]
 
 
 def type_text(hub, text: str) -> str:
@@ -161,7 +183,9 @@ def type_text(hub, text: str) -> str:
         hub.platform.type_text(clean)
     except OSError:
         # Windows refuses keystrokes sent to a window with higher privileges than Aura.
-        raise ToolError("I couldn't type into that window; it may be running as administrator") from None
+        raise ToolError(
+            "I couldn't type into that window; it may be running as administrator"
+        ) from None
     return "Typed"
 
 
@@ -176,34 +200,139 @@ def clipboard_write(hub, text: str) -> str:
 
 def register(reg) -> None:
     S = {"type": "string"}
-    reg.add(Tool("open_app", "Open an installed application by its spoken name.", open_app, {"name": S}, ("name",)))
-    reg.add(Tool("close_app", "Close a running application.", close_app, {"name": S}, ("name",),
-                 risk=CONFIRM, confirm="Close {name}?"))
+    reg.add(
+        Tool(
+            "open_app",
+            "Open an installed application by its spoken name.",
+            open_app,
+            {"name": S},
+            ("name",),
+        )
+    )
+    reg.add(
+        Tool(
+            "close_app",
+            "Close a running application.",
+            close_app,
+            {"name": S},
+            ("name",),
+            risk=CONFIRM,
+            confirm="Close {name}?",
+        )
+    )
     reg.add(Tool("list_apps", "List the applications that can be opened.", list_apps))
-    reg.add(Tool("volume_set", "Set speaker volume (0-100).", volume_set, {"level": PCT}, ("level",)))
-    reg.add(Tool("volume_change", "Raise or lower volume by a number of points (negative lowers).", volume_change,
-                 {"delta": {"type": "integer", "minimum": -100, "maximum": 100}}, ("delta",)))
-    reg.add(Tool("mute", "Mute or unmute the speakers.", mute, {"on": {"type": "boolean"}}, ("on",)))
-    reg.add(Tool("brightness_set", "Set screen brightness (0-100).", brightness_set, {"level": PCT}, ("level",)))
-    reg.add(Tool("brightness_change", "Raise or lower brightness by a number of points (negative lowers).", brightness_change,
-                 {"delta": {"type": "integer", "minimum": -100, "maximum": 100}}, ("delta",)))
-    reg.add(Tool("media", "Control media playback.", media,
-                 {"action": {"type": "string", "enum": ["play_pause", "next", "previous", "stop"]}}, ("action",)))
+    reg.add(
+        Tool("volume_set", "Set speaker volume (0-100).", volume_set, {"level": PCT}, ("level",))
+    )
+    reg.add(
+        Tool(
+            "volume_change",
+            "Raise or lower volume by a number of points (negative lowers).",
+            volume_change,
+            {"delta": {"type": "integer", "minimum": -100, "maximum": 100}},
+            ("delta",),
+        )
+    )
+    reg.add(
+        Tool("mute", "Mute or unmute the speakers.", mute, {"on": {"type": "boolean"}}, ("on",))
+    )
+    reg.add(
+        Tool(
+            "brightness_set",
+            "Set screen brightness (0-100).",
+            brightness_set,
+            {"level": PCT},
+            ("level",),
+        )
+    )
+    reg.add(
+        Tool(
+            "brightness_change",
+            "Raise or lower brightness by a number of points (negative lowers).",
+            brightness_change,
+            {"delta": {"type": "integer", "minimum": -100, "maximum": 100}},
+            ("delta",),
+        )
+    )
+    reg.add(
+        Tool(
+            "media",
+            "Control media playback.",
+            media,
+            {"action": {"type": "string", "enum": ["play_pause", "next", "previous", "stop"]}},
+            ("action",),
+        )
+    )
     reg.add(Tool("lock_screen", "Lock the laptop.", lock_screen))
     reg.add(Tool("screenshot", "Take a screenshot and save it.", screenshot))
-    reg.add(Tool("system_status", "Battery (and time left), Wi-Fi, CPU, memory, free disk space and volume; about = one part only.", system_status,
-                 {"about": {"type": "string", "enum": ["all", "battery", "wifi", "disk"]}}))
-    reg.add(Tool("window", "Arrange the window in front, or show the desktop.", window,
-                 {"action": {"type": "string", "enum": sorted(WINDOW_DONE)}}, ("action",)))
-    reg.add(Tool("dark_mode", "Switch Windows between dark mode (true) and light mode (false).", dark_mode,
-                 {"on": {"type": "boolean"}}, ("on",)))
-    reg.add(Tool("empty_recycle_bin", "Permanently delete everything in the Recycle Bin.", empty_recycle_bin,
-                 risk=CRITICAL, confirm="Permanently delete everything in the Recycle Bin?"))
-    reg.add(Tool("power", "Sleep, shut down or restart the laptop.", power,
-                 {"action": {"type": "string", "enum": ["sleep", "shutdown", "restart"]}}, ("action",),
-                 risk=CRITICAL, confirm="{action} the laptop?"))
-    reg.add(Tool("type_text", "Type text into the window that currently has focus (dictation). Cannot press Enter.",
-                 type_text, {"text": S}, ("text",), outward=True, confirm="Type this into the current window: {text}"))
-    reg.add(Tool("clipboard_read", "Read the text on the clipboard.", clipboard_read, untrusted=True))
-    reg.add(Tool("clipboard_write", "Put text on the clipboard.", clipboard_write, {"text": S}, ("text",),
-                 outward=True, confirm="Copy this to the clipboard: {text}"))
+    reg.add(
+        Tool(
+            "system_status",
+            "Battery (and time left), Wi-Fi, CPU, memory, free disk space and volume; about = one part only.",
+            system_status,
+            {"about": {"type": "string", "enum": ["all", "battery", "wifi", "disk"]}},
+        )
+    )
+    reg.add(
+        Tool(
+            "window",
+            "Arrange the window in front, or show the desktop.",
+            window,
+            {"action": {"type": "string", "enum": sorted(WINDOW_DONE)}},
+            ("action",),
+        )
+    )
+    reg.add(
+        Tool(
+            "dark_mode",
+            "Switch Windows between dark mode (true) and light mode (false).",
+            dark_mode,
+            {"on": {"type": "boolean"}},
+            ("on",),
+        )
+    )
+    reg.add(
+        Tool(
+            "empty_recycle_bin",
+            "Permanently delete everything in the Recycle Bin.",
+            empty_recycle_bin,
+            risk=CRITICAL,
+            confirm="Permanently delete everything in the Recycle Bin?",
+        )
+    )
+    reg.add(
+        Tool(
+            "power",
+            "Sleep, shut down or restart the laptop.",
+            power,
+            {"action": {"type": "string", "enum": ["sleep", "shutdown", "restart"]}},
+            ("action",),
+            risk=CRITICAL,
+            confirm="{action} the laptop?",
+        )
+    )
+    reg.add(
+        Tool(
+            "type_text",
+            "Type text into the window that currently has focus (dictation). Cannot press Enter.",
+            type_text,
+            {"text": S},
+            ("text",),
+            outward=True,
+            confirm="Type this into the current window: {text}",
+        )
+    )
+    reg.add(
+        Tool("clipboard_read", "Read the text on the clipboard.", clipboard_read, untrusted=True)
+    )
+    reg.add(
+        Tool(
+            "clipboard_write",
+            "Put text on the clipboard.",
+            clipboard_write,
+            {"text": S},
+            ("text",),
+            outward=True,
+            confirm="Copy this to the clipboard: {text}",
+        )
+    )

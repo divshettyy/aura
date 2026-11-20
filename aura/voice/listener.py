@@ -6,6 +6,7 @@ A conversation is one wake (wake word or push-to-talk) followed by any number of
 the user speaks, Aura answers, and Aura keeps listening for a few seconds so the next thing
 can be said without the wake word. Silence, or a word like "stop" or "thanks", ends it.
 """
+
 from __future__ import annotations
 
 import collections
@@ -24,14 +25,62 @@ RATE = 16000
 FRAME = 1280  # 80 ms, the frame size the wake-word model expects
 FRAME_SECONDS = FRAME / RATE
 MIN_SPEECH_RMS = 150.0  # never treat anything quieter than this as speech
-YES = {"yes", "yes please", "yeah", "yep", "confirm", "confirmed", "do it", "go ahead", "yes do it", "yes go ahead", "sure"}
+YES = {
+    "yes",
+    "yes please",
+    "yeah",
+    "yep",
+    "confirm",
+    "confirmed",
+    "do it",
+    "go ahead",
+    "yes do it",
+    "yes go ahead",
+    "sure",
+}
 # Said on their own in a follow-up, these end the conversation instead of being sent as a request.
-STOP = {"stop", "thanks", "thank you", "thanks a lot", "thank you very much", "ok thanks", "okay thanks", "ok thank you",
-        "okay thank you", "no thanks", "no thank you", "thats all", "that is all", "thats it", "that is it", "never mind",
-        "nevermind", "nothing", "nothing else", "no", "bye", "goodbye", "cancel", "im done", "done"}
+STOP = {
+    "stop",
+    "thanks",
+    "thank you",
+    "thanks a lot",
+    "thank you very much",
+    "ok thanks",
+    "okay thanks",
+    "ok thank you",
+    "okay thank you",
+    "no thanks",
+    "no thank you",
+    "thats all",
+    "that is all",
+    "thats it",
+    "that is it",
+    "never mind",
+    "nevermind",
+    "nothing",
+    "nothing else",
+    "no",
+    "bye",
+    "goodbye",
+    "cancel",
+    "im done",
+    "done",
+}
 # What speech-to-text tends to invent from a cough, a click or a hum. Ignored in follow-ups,
 # where nothing but "some sound happened" says that the user was talking to Aura.
-NOISE_TEXT = {"", "you", "the", "so", "oh", "uh", "um", "hmm", "mm", "thanks for watching", "thank you for watching"}
+NOISE_TEXT = {
+    "",
+    "you",
+    "the",
+    "so",
+    "oh",
+    "uh",
+    "um",
+    "hmm",
+    "mm",
+    "thanks for watching",
+    "thank you for watching",
+}
 GREETINGS = {"hey", "hi", "hay", "he", "a", "ok", "okay", "hello", "yo", "eh", "hej", "say"}
 
 
@@ -88,23 +137,36 @@ def strip_wake(text: str, wake_word: str) -> tuple[bool, str]:
 class Recorder:
     """Decides where a spoken command starts and ends, by loudness relative to the room's noise."""
 
-    SHORT_SPEECH_SECONDS = 0.5   # less speech than this ("pause", "yes", a first word) ...
-    SHORT_SILENCE_SECONDS = 0.9  # ... waits this long, because the speaker has probably not finished
+    SHORT_SPEECH_SECONDS = 0.5  # less speech than this ("pause", "yes", a first word) ...
+    SHORT_SILENCE_SECONDS = (
+        0.9  # ... waits this long, because the speaker has probably not finished
+    )
 
-    def __init__(self, silence_seconds: float, max_seconds: float, start_timeout: float = 4.0) -> None:
+    def __init__(
+        self, silence_seconds: float, max_seconds: float, start_timeout: float = 4.0
+    ) -> None:
         self.silence_frames = max(1, round(silence_seconds / FRAME_SECONDS))
-        self.short_silence_frames = max(self.silence_frames, round(self.SHORT_SILENCE_SECONDS / FRAME_SECONDS))
+        self.short_silence_frames = max(
+            self.silence_frames, round(self.SHORT_SILENCE_SECONDS / FRAME_SECONDS)
+        )
         self.short_speech_frames = round(self.SHORT_SPEECH_SECONDS / FRAME_SECONDS)
         self.max_frames = round(max_seconds / FRAME_SECONDS)
         self.start_frames = round(start_timeout / FRAME_SECONDS)
 
-    def record(self, next_frame, noise_floor: float, start_timeout: float | None = None,
-               lead: list[np.ndarray] | None = None) -> np.ndarray | None:
+    def record(
+        self,
+        next_frame,
+        noise_floor: float,
+        start_timeout: float | None = None,
+        lead: list[np.ndarray] | None = None,
+    ) -> np.ndarray | None:
         """next_frame() returns an int16 frame or None when the source ends. None result = nobody spoke.
         start_timeout overrides how long to wait for the first word. lead is audio already known
         to be speech (the words that interrupted Aura); recording then counts as started."""
         threshold = max(noise_floor * 3.0, MIN_SPEECH_RMS)
-        start_frames = self.start_frames if start_timeout is None else round(start_timeout / FRAME_SECONDS)
+        start_frames = (
+            self.start_frames if start_timeout is None else round(start_timeout / FRAME_SECONDS)
+        )
         kept: list[np.ndarray] = list(lead or [])
         started = bool(kept)
         spoken = sum(1 for f in kept if rms(f) > threshold)
@@ -116,7 +178,9 @@ class Recorder:
             loud = rms(frame) > threshold
             if not started:
                 waited += 1
-                kept = (kept + [frame])[-4:]  # keep a little lead-in so the first word isn't clipped
+                kept = (kept + [frame])[
+                    -4:
+                ]  # keep a little lead-in so the first word isn't clipped
                 if loud:
                     started, spoken = True, 1
                 elif waited >= start_frames:
@@ -126,26 +190,36 @@ class Recorder:
             spoken += loud
             quiet = 0 if loud else quiet + 1
             # A long sentence ends on a short pause; one or two words get a longer one.
-            if quiet >= (self.silence_frames if spoken > self.short_speech_frames else self.short_silence_frames):
+            if quiet >= (
+                self.silence_frames
+                if spoken > self.short_speech_frames
+                else self.short_silence_frames
+            ):
                 break
         return np.concatenate(kept) if started else None
 
 
 class Listener:
-    VERIFY_SECONDS = 2.0        # how much recent audio the wake double-check transcribes
-    VERIFY_DELAY_FRAMES = 2      # wait 160 ms after a near-miss so the phrase is complete
+    VERIFY_SECONDS = 2.0  # how much recent audio the wake double-check transcribes
+    VERIFY_DELAY_FRAMES = 2  # wait 160 ms after a near-miss so the phrase is complete
     VERIFY_COOLDOWN_FRAMES = 19  # ~1.5 s between double-checks, so one near-miss is checked once
-    BARGE_MIN_RMS = 400.0       # speech must be at least this loud to interrupt Aura
-    BARGE_FRAMES = 3            # ... for this many frames in a row (240 ms)
+    BARGE_MIN_RMS = 400.0  # speech must be at least this loud to interrupt Aura
+    BARGE_FRAMES = 3  # ... for this many frames in a row (240 ms)
 
     def __init__(self, hub, speaker) -> None:
         self.hub, self.speaker = hub, speaker
         self.cfg = hub.cfg["voice"]
         self.frames: queue.Queue = queue.Queue(maxsize=400)
         self.talk = threading.Event()  # set by the push-to-talk hotkey
-        self.recent = collections.deque(maxlen=62)  # ~5 s of loudness history, for the room's noise floor
-        self.ring = collections.deque(maxlen=round(self.VERIFY_SECONDS / FRAME_SECONDS))  # the audio just heard
-        self.recorder = Recorder(float(self.cfg["silence_seconds"]), float(self.cfg["max_command_seconds"]))
+        self.recent = collections.deque(
+            maxlen=62
+        )  # ~5 s of loudness history, for the room's noise floor
+        self.ring = collections.deque(
+            maxlen=round(self.VERIFY_SECONDS / FRAME_SECONDS)
+        )  # the audio just heard
+        self.recorder = Recorder(
+            float(self.cfg["silence_seconds"]), float(self.cfg["max_command_seconds"])
+        )
         self.follow_up = bool(self.cfg.get("follow_up", True))
         self.follow_up_seconds = float(self.cfg.get("follow_up_seconds", 6))
         self.follow_up_cue = bool(self.cfg.get("follow_up_cue", True))
@@ -168,8 +242,12 @@ class Listener:
         if name in openwakeword.MODELS:
             openwakeword.utils.download_models(model_names=[name])  # no-op once downloaded
         self.wake = Model(wakeword_models=[name], inference_framework="onnx")
-        self.whisper = WhisperModel(self.cfg["stt_model"], device="cpu", compute_type="int8",
-                                    cpu_threads=int(self.cfg.get("stt_threads", 4)))
+        self.whisper = WhisperModel(
+            self.cfg["stt_model"],
+            device="cpu",
+            compute_type="int8",
+            cpu_threads=int(self.cfg.get("stt_threads", 4)),
+        )
         # The first transcription pays a one-off start-up cost; pay it now, not on the first command.
         self.transcribe(np.zeros(RATE // 2, dtype=np.int16))
 
@@ -177,10 +255,15 @@ class Listener:
         # The recorder has already cut the audio to the speech, so the extra voice-detection
         # pass and timestamps are skipped, and greedy decoding is used: about twice as fast.
         _lead, name = _wake_parts(self.cfg["wake_word"])
-        segments, _info = self.whisper.transcribe(audio.astype(np.float32) / 32768.0, language="en", beam_size=1,
-                                                  without_timestamps=True, vad_filter=False,
-                                                  condition_on_previous_text=False,
-                                                  hotwords=name.capitalize() or None)
+        segments, _info = self.whisper.transcribe(
+            audio.astype(np.float32) / 32768.0,
+            language="en",
+            beam_size=1,
+            without_timestamps=True,
+            vad_filter=False,
+            condition_on_previous_text=False,
+            hotwords=name.capitalize() or None,
+        )
         return " ".join(s.text.strip() for s in segments).strip()
 
     # audio ------------------------------------------------------------
@@ -209,8 +292,12 @@ class Listener:
         the middle value would be the speaker's own voice and no command would count as loud."""
         return float(np.percentile(self.recent, 20)) if self.recent else 100.0
 
-    def capture(self, start_timeout: float | None = None, flush: bool = True,
-                lead: list[np.ndarray] | None = None) -> str:
+    def capture(
+        self,
+        start_timeout: float | None = None,
+        flush: bool = True,
+        lead: list[np.ndarray] | None = None,
+    ) -> str:
         """Record one utterance and return its text ('' if nobody spoke)."""
         if flush:
             self._flush()
@@ -274,8 +361,12 @@ class Listener:
         self._verify_wait = self.VERIFY_COOLDOWN_FRAMES
         heard = self.transcribe(np.concatenate(self.ring))
         confirmed = mentions_wake(heard, self.cfg["wake_word"])
-        log.info("wake score %.2f, double-check heard %r: %s", self._candidate_score, heard,
-                 "wake" if confirmed else "ignored")
+        log.info(
+            "wake score %.2f, double-check heard %r: %s",
+            self._candidate_score,
+            heard,
+            "wake" if confirmed else "ignored",
+        )
         if confirmed:
             self._converse(flush=False)  # keep what was said meanwhile: it may be the command
 
@@ -287,7 +378,9 @@ class Listener:
         # Audio that queued up while the wake word was double-checked (two seconds or more on a
         # slow processor) is listened to first, but must not use up the time the user gets to start.
         backlog = 0.0 if flush else self.frames.qsize() * FRAME_SECONDS
-        text = self.capture(flush=flush, start_timeout=self.recorder.start_frames * FRAME_SECONDS + backlog)
+        text = self.capture(
+            flush=flush, start_timeout=self.recorder.start_frames * FRAME_SECONDS + backlog
+        )
         addressed, rest = strip_wake(text, word)
         if addressed and not rest:
             text = self.capture(flush=False)  # only the wake phrase so far: the command comes next
@@ -311,7 +404,9 @@ class Listener:
         if interruption:
             text = self.capture(flush=False, lead=interruption)  # they are already mid-sentence
         elif interruption is not None:
-            self.hub.platform.beep("wake")  # push-to-talk cut the reply short: listen like a fresh wake
+            self.hub.platform.beep(
+                "wake"
+            )  # push-to-talk cut the reply short: listen like a fresh wake
             text = self.capture()
         else:
             if self.follow_up_cue:
@@ -385,7 +480,9 @@ class Listener:
             if self.hub.muted:
                 time.sleep(0.3)  # microphone device is fully closed while muted
                 continue
-            with sd.RawInputStream(samplerate=RATE, blocksize=FRAME, dtype="int16", channels=1, callback=self._on_audio):
+            with sd.RawInputStream(
+                samplerate=RATE, blocksize=FRAME, dtype="int16", channels=1, callback=self._on_audio
+            ):
                 while not self.hub.muted:
                     frame = self._next()
                     if frame is not None and len(frame) == FRAME:

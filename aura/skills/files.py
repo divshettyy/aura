@@ -1,4 +1,5 @@
 """Files and notes. Everything is confined to the folders listed under files.roots."""
+
 from __future__ import annotations
 
 import datetime as dt
@@ -10,13 +11,83 @@ from ..config import expand
 from ..tools import CONFIRM, CRITICAL, Tool, ToolError
 
 # Opening these would run code, so Aura refuses to open them by voice.
-EXECUTABLE = {".exe", ".bat", ".cmd", ".com", ".scr", ".pif", ".msi", ".msp", ".ps1", ".vbs", ".vbe", ".js", ".jse",
-              ".wsf", ".wsh", ".hta", ".lnk", ".url", ".reg", ".jar", ".py", ".pyw", ".sh", ".cpl", ".dll", ".appx",
-              ".msix", ".application", ".gadget", ".inf", ".scf", ".chm", ".iso", ".img", ".vhd", ".vhdx",
-              ".msc", ".wsb", ".diagcab", ".diagpkg", ".search-ms", ".library-ms", ".settingcontent-ms",
-              ".appref-ms", ".website", ".ps1xml", ".psm1", ".psd1", ".wsc", ".sct", ".ws", ".vb", ".msu",
-              ".mst", ".xll", ".jnlp", ".xbap", ".appinstaller", ".appxbundle", ".msixbundle"}
-TEXT = {".txt", ".md", ".csv", ".log", ".json", ".yaml", ".yml", ".xml", ".html", ".ini", ".cfg", ".rst", ".tex"}
+EXECUTABLE = {
+    ".exe",
+    ".bat",
+    ".cmd",
+    ".com",
+    ".scr",
+    ".pif",
+    ".msi",
+    ".msp",
+    ".ps1",
+    ".vbs",
+    ".vbe",
+    ".js",
+    ".jse",
+    ".wsf",
+    ".wsh",
+    ".hta",
+    ".lnk",
+    ".url",
+    ".reg",
+    ".jar",
+    ".py",
+    ".pyw",
+    ".sh",
+    ".cpl",
+    ".dll",
+    ".appx",
+    ".msix",
+    ".application",
+    ".gadget",
+    ".inf",
+    ".scf",
+    ".chm",
+    ".iso",
+    ".img",
+    ".vhd",
+    ".vhdx",
+    ".msc",
+    ".wsb",
+    ".diagcab",
+    ".diagpkg",
+    ".search-ms",
+    ".library-ms",
+    ".settingcontent-ms",
+    ".appref-ms",
+    ".website",
+    ".ps1xml",
+    ".psm1",
+    ".psd1",
+    ".wsc",
+    ".sct",
+    ".ws",
+    ".vb",
+    ".msu",
+    ".mst",
+    ".xll",
+    ".jnlp",
+    ".xbap",
+    ".appinstaller",
+    ".appxbundle",
+    ".msixbundle",
+}
+TEXT = {
+    ".txt",
+    ".md",
+    ".csv",
+    ".log",
+    ".json",
+    ".yaml",
+    ".yml",
+    ".xml",
+    ".html",
+    ".ini",
+    ".cfg",
+    ".rst",
+    ".tex",
+}
 SKIP_DIRS = {"node_modules", ".git", "__pycache__", ".venv", "venv", "AppData"}
 
 
@@ -143,16 +214,63 @@ def notes_read(hub, date: str = "") -> str:
 
 def register(reg) -> None:
     S = {"type": "string"}
-    reg.add(Tool("files_search", "Find files by words in their name, inside the user's allowed folders.",
-                 files_search, {"query": S}, ("query",)))
+    reg.add(
+        Tool(
+            "files_search",
+            "Find files by words in their name, inside the user's allowed folders.",
+            files_search,
+            {"query": S},
+            ("query",),
+        )
+    )
     reg.add(Tool("files_recent", "List the most recently changed files.", files_recent))
-    reg.add(Tool("files_open", "Open a file or folder with its default app (full path).", files_open, {"path": S}, ("path",)))
-    reg.add(Tool("files_read", "Read a plain-text file so it can be summarised or read out (full path).",
-                 files_read, {"path": S}, ("path",), untrusted=True))
-    reg.add(Tool("files_move", "Move or rename a file (full paths). Never overwrites.", files_move,
-                 {"source": S, "destination": S}, ("source", "destination"), risk=CONFIRM,
-                 confirm="Move {source} to {destination}?"))
-    reg.add(Tool("files_delete", "Send a file or folder to the Recycle Bin (full path).", files_delete,
-                 {"path": S}, ("path",), risk=CRITICAL, confirm="Send {path} to the Recycle Bin?"))
+    reg.add(
+        Tool(
+            "files_open",
+            "Open a file or folder with its default app (full path).",
+            files_open,
+            {"path": S},
+            ("path",),
+        )
+    )
+    reg.add(
+        Tool(
+            "files_read",
+            "Read a plain-text file so it can be summarised or read out (full path).",
+            files_read,
+            {"path": S},
+            ("path",),
+            untrusted=True,
+        )
+    )
+    reg.add(
+        Tool(
+            "files_move",
+            "Move or rename a file (full paths). Never overwrites.",
+            files_move,
+            {"source": S, "destination": S},
+            ("source", "destination"),
+            risk=CONFIRM,
+            confirm="Move {source} to {destination}?",
+        )
+    )
+    reg.add(
+        Tool(
+            "files_delete",
+            "Send a file or folder to the Recycle Bin (full path).",
+            files_delete,
+            {"path": S},
+            ("path",),
+            risk=CRITICAL,
+            confirm="Send {path} to the Recycle Bin?",
+        )
+    )
     reg.add(Tool("note_add", "Add a line to today's notes file.", note_add, {"text": S}, ("text",)))
-    reg.add(Tool("notes_read", "Read the notes for a day (YYYY-MM-DD, default today).", notes_read, {"date": S}))
+    reg.add(
+        Tool(
+            "notes_read",
+            "Read the notes for a day (YYYY-MM-DD, default today).",
+            notes_read,
+            {"date": S},
+        )
+    )

@@ -118,8 +118,9 @@ Nokia calls Jio SIM in SIM800L
 **Quick test after wiring:**
 ```python
 import serial
-s = serial.Serial('COM4', 9600, timeout=1)  # adjust COM number
-s.write(b'AT\r\n')
+
+s = serial.Serial("COM4", 9600, timeout=1)  # adjust COM number
+s.write(b"AT\r\n")
 print(s.readline())  # expected: b'OK\r\n'
 ```
 

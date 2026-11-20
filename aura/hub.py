@@ -1,4 +1,5 @@
 """The hub wires everything together. Every action, from any source, passes through run_tool."""
+
 from __future__ import annotations
 
 import inspect
@@ -10,7 +11,7 @@ from . import config
 from .audit import AuditLog
 from .automation import Automation
 from .bus import Bus
-from .policy import ALLOW, DENY, PHYSICAL, VOICE, Policy, Turn
+from .policy import DENY, PHYSICAL, VOICE, Policy, Turn
 from .state import State
 from .tools import Registry, ToolError
 
@@ -25,7 +26,9 @@ class Result:
 
 
 class Hub:
-    def __init__(self, cfg: dict | None = None, platform=None, state_path=None, audit_path=None) -> None:
+    def __init__(
+        self, cfg: dict | None = None, platform=None, state_path=None, audit_path=None
+    ) -> None:
         from . import platform as platform_pkg
         from .skills import files, meta, system, web
 
@@ -72,7 +75,9 @@ class Hub:
             decision = self.policy.decide(tool, args, turn, locked=self.platform.is_locked())
             turn.calls += 1
             if decision.action == DENY:
-                self.audit.record("denied", tool=name, args=args, source=turn.source, reason=decision.reason)
+                self.audit.record(
+                    "denied", tool=name, args=args, source=turn.source, reason=decision.reason
+                )
                 return Result(False, f"Not allowed: {decision.reason}.")
             if decision.action in (VOICE, PHYSICAL):
                 question = tool.confirmation(args)
@@ -81,9 +86,16 @@ class Hub:
                 else:
                     approved = self.platform.confirm_dialog(
                         f"Aura wants to:\n\n{question}\n\nRequested by: {turn.source}"
-                        + ("\n\nWarning: this request followed content Aura read from a file, "
-                           "the clipboard or the web." if turn.tainted else ""))
-                self.audit.record("confirmation", tool=name, args=args, how=decision.action, approved=approved)
+                        + (
+                            "\n\nWarning: this request followed content Aura read from a file, "
+                            "the clipboard or the web."
+                            if turn.tainted
+                            else ""
+                        )
+                    )
+                self.audit.record(
+                    "confirmation", tool=name, args=args, how=decision.action, approved=approved
+                )
                 if not approved:
                     return Result(False, "Cancelled; it was not confirmed.")
             try:
@@ -96,12 +108,18 @@ class Hub:
                 else:
                     text = str(tool.func(self, **args))
             except ToolError as exc:
-                self.audit.record("failed", tool=name, args=args, source=turn.source, error=str(exc))
+                self.audit.record(
+                    "failed", tool=name, args=args, source=turn.source, error=str(exc)
+                )
                 return Result(False, f"{exc}."[0].upper() + f"{exc}."[1:])
             except Exception as exc:
                 log.exception("tool %s crashed", name)
-                self.audit.record("failed", tool=name, args=args, source=turn.source, error=repr(exc))
-                return Result(False, f"Something went wrong while running {name.replace('_', ' ')}.")
+                self.audit.record(
+                    "failed", tool=name, args=args, source=turn.source, error=repr(exc)
+                )
+                return Result(
+                    False, f"Something went wrong while running {name.replace('_', ' ')}."
+                )
             if tool.untrusted:
                 turn.tainted = True
             self.audit.record("ran", tool=name, args=args, source=turn.source)

@@ -1,4 +1,5 @@
 """Speech output through the voices built into Windows (SAPI). Fully offline."""
+
 from __future__ import annotations
 
 import queue
@@ -39,7 +40,10 @@ class Speaker:
     def speaking(self) -> bool:
         """True while speaking and for a moment after, so Aura never hears itself. Bounded by
         MAX_UTTERANCE_SECONDS so a wedged SAPI call can't leave the mic blocked indefinitely."""
-        if self._pending > 0 and time.monotonic() - self._speak_started < self.MAX_UTTERANCE_SECONDS:
+        if (
+            self._pending > 0
+            and time.monotonic() - self._speak_started < self.MAX_UTTERANCE_SECONDS
+        ):
             return True
         return time.monotonic() - self.quiet_since < self.TAIL_SECONDS
 
@@ -49,7 +53,9 @@ class Speaker:
         item = _Utterance(text)
         with self._lock:
             if self._pending == 0:
-                self._speak_started = time.monotonic()  # the cap counts from now, not from a stale start
+                self._speak_started = (
+                    time.monotonic()
+                )  # the cap counts from now, not from a stale start
             self._pending += 1
         self._queue.put(item)
         if wait:

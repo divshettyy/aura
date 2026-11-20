@@ -1,4 +1,5 @@
 """Windows implementation. Uses only documented Win32 / shell calls; nothing here needs admin."""
+
 from __future__ import annotations
 
 import ctypes
@@ -19,13 +20,24 @@ ULONG_PTR = ctypes.c_size_t
 
 
 class _KEYBDINPUT(ctypes.Structure):
-    _fields_ = [("wVk", wintypes.WORD), ("wScan", wintypes.WORD), ("dwFlags", wintypes.DWORD),
-                ("time", wintypes.DWORD), ("dwExtraInfo", ULONG_PTR)]
+    _fields_ = [
+        ("wVk", wintypes.WORD),
+        ("wScan", wintypes.WORD),
+        ("dwFlags", wintypes.DWORD),
+        ("time", wintypes.DWORD),
+        ("dwExtraInfo", ULONG_PTR),
+    ]
 
 
 class _MOUSEINPUT(ctypes.Structure):  # present so the union has the size Windows expects
-    _fields_ = [("dx", wintypes.LONG), ("dy", wintypes.LONG), ("mouseData", wintypes.DWORD),
-                ("dwFlags", wintypes.DWORD), ("time", wintypes.DWORD), ("dwExtraInfo", ULONG_PTR)]
+    _fields_ = [
+        ("dx", wintypes.LONG),
+        ("dy", wintypes.LONG),
+        ("mouseData", wintypes.DWORD),
+        ("dwFlags", wintypes.DWORD),
+        ("time", wintypes.DWORD),
+        ("dwExtraInfo", ULONG_PTR),
+    ]
 
 
 class _INPUTUNION(ctypes.Union):
@@ -51,21 +63,37 @@ user32.RegisterHotKey.argtypes = [wintypes.HWND, ctypes.c_int, wintypes.UINT, wi
 user32.RegisterHotKey.restype = wintypes.BOOL
 user32.UnregisterHotKey.argtypes = [wintypes.HWND, ctypes.c_int]
 user32.UnregisterHotKey.restype = wintypes.BOOL
-user32.GetMessageW.argtypes = [ctypes.POINTER(wintypes.MSG), wintypes.HWND, wintypes.UINT, wintypes.UINT]
+user32.GetMessageW.argtypes = [
+    ctypes.POINTER(wintypes.MSG),
+    wintypes.HWND,
+    wintypes.UINT,
+    wintypes.UINT,
+]
 user32.GetMessageW.restype = ctypes.c_int  # BOOL that is -1 on error, so it must stay signed
 user32.GetForegroundWindow.argtypes = []
 user32.GetForegroundWindow.restype = wintypes.HWND
 user32.ShowWindow.argtypes = [wintypes.HWND, ctypes.c_int]
 user32.ShowWindow.restype = wintypes.BOOL
-user32.SendMessageTimeoutW.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPCWSTR,
-                                       wintypes.UINT, wintypes.UINT, ctypes.POINTER(ULONG_PTR)]
+user32.SendMessageTimeoutW.argtypes = [
+    wintypes.HWND,
+    wintypes.UINT,
+    wintypes.WPARAM,
+    wintypes.LPCWSTR,
+    wintypes.UINT,
+    wintypes.UINT,
+    ctypes.POINTER(ULONG_PTR),
+]
 user32.SendMessageTimeoutW.restype = ULONG_PTR
 
 shell32 = ctypes.WinDLL("shell32", use_last_error=True)
 
 
 class _SHQUERYRBINFO(ctypes.Structure):
-    _fields_ = [("cbSize", wintypes.DWORD), ("i64Size", ctypes.c_longlong), ("i64NumItems", ctypes.c_longlong)]
+    _fields_ = [
+        ("cbSize", wintypes.DWORD),
+        ("i64Size", ctypes.c_longlong),
+        ("i64NumItems", ctypes.c_longlong),
+    ]
 
 
 shell32.SHQueryRecycleBinW.argtypes = [wintypes.LPCWSTR, ctypes.POINTER(_SHQUERYRBINFO)]
@@ -73,8 +101,12 @@ shell32.SHQueryRecycleBinW.restype = ctypes.c_long  # HRESULT
 shell32.SHEmptyRecycleBinW.argtypes = [wintypes.HWND, wintypes.LPCWSTR, wintypes.DWORD]
 shell32.SHEmptyRecycleBinW.restype = ctypes.c_long  # HRESULT
 
-SHOW = {"minimize": 6, "maximize": 3, "restore": 9}                      # SW_MINIMIZE, SW_MAXIMIZE, SW_RESTORE
-WIN_KEYS = {"show_desktop": 0x44, "snap_left": 0x25, "snap_right": 0x27}  # Win+D, Win+Left, Win+Right
+SHOW = {"minimize": 6, "maximize": 3, "restore": 9}  # SW_MINIMIZE, SW_MAXIMIZE, SW_RESTORE
+WIN_KEYS = {
+    "show_desktop": 0x44,
+    "snap_left": 0x25,
+    "snap_right": 0x27,
+}  # Win+D, Win+Left, Win+Right
 THEME_KEY = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
 
 
@@ -86,7 +118,9 @@ class WindowsPlatform:
         """Shortcut name -> .lnk path, from the per-user and all-users Start Menu."""
         found: dict[str, str] = {}
         for var in ("PROGRAMDATA", "APPDATA"):
-            root = Path(os.environ.get(var, "")) / "Microsoft" / "Windows" / "Start Menu" / "Programs"
+            root = (
+                Path(os.environ.get(var, "")) / "Microsoft" / "Windows" / "Start Menu" / "Programs"
+            )
             if root.is_dir():
                 for link in root.rglob("*.lnk"):
                     name = link.stem.lower()
@@ -162,8 +196,11 @@ class WindowsPlatform:
             name = AudioUtilities.CreateDevice(device).FriendlyName or "microphone"
         except Exception:
             name = "microphone"
-        return {"name": name, "muted": bool(endpoint.GetMute()),
-                "level": round(endpoint.GetMasterVolumeLevelScalar() * 100)}
+        return {
+            "name": name,
+            "muted": bool(endpoint.GetMute()),
+            "level": round(endpoint.GetMasterVolumeLevelScalar() * 100),
+        }
 
     def get_brightness(self) -> int:
         import screen_brightness_control as sbc
@@ -201,9 +238,13 @@ class WindowsPlatform:
     def power(self, action: str) -> None:
         quiet = subprocess.CREATE_NO_WINDOW  # no console flash
         if action == "sleep":
-            subprocess.Popen(["rundll32.exe", "powrprof.dll,SetSuspendState", "0,1,0"], creationflags=quiet)
+            subprocess.Popen(
+                ["rundll32.exe", "powrprof.dll,SetSuspendState", "0,1,0"], creationflags=quiet
+            )
         elif action == "shutdown":
-            subprocess.Popen(["shutdown", "/s", "/t", "30"], creationflags=quiet)  # 30 s grace; "shutdown /a" cancels
+            subprocess.Popen(
+                ["shutdown", "/s", "/t", "30"], creationflags=quiet
+            )  # 30 s grace; "shutdown /a" cancels
         elif action == "restart":
             subprocess.Popen(["shutdown", "/r", "/t", "30"], creationflags=quiet)
         else:
@@ -217,8 +258,13 @@ class WindowsPlatform:
 
     def wifi_name(self):
         try:
-            out = subprocess.run(["netsh", "wlan", "show", "interfaces"], capture_output=True, text=True,
-                                 timeout=5, creationflags=subprocess.CREATE_NO_WINDOW).stdout
+            out = subprocess.run(
+                ["netsh", "wlan", "show", "interfaces"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                creationflags=subprocess.CREATE_NO_WINDOW,
+            ).stdout
         except (OSError, subprocess.SubprocessError):
             return None
         for line in out.splitlines():
@@ -273,11 +319,17 @@ class WindowsPlatform:
         """Per-user setting, the same two values the Settings app writes; no admin needed."""
         import winreg
 
-        with winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, THEME_KEY, 0, winreg.KEY_SET_VALUE) as key:
+        with winreg.CreateKeyEx(
+            winreg.HKEY_CURRENT_USER, THEME_KEY, 0, winreg.KEY_SET_VALUE
+        ) as key:
             for name in ("AppsUseLightTheme", "SystemUsesLightTheme"):
                 winreg.SetValueEx(key, name, 0, winreg.REG_DWORD, 0 if on else 1)
-        result = ULONG_PTR(0)  # tell running programs the colours changed: HWND_BROADCAST, WM_SETTINGCHANGE
-        user32.SendMessageTimeoutW(0xFFFF, 0x001A, 0, "ImmersiveColorSet", 0x0002, 200, ctypes.byref(result))
+        result = ULONG_PTR(
+            0
+        )  # tell running programs the colours changed: HWND_BROADCAST, WM_SETTINGCHANGE
+        user32.SendMessageTimeoutW(
+            0xFFFF, 0x001A, 0, "ImmersiveColorSet", 0x0002, 200, ctypes.byref(result)
+        )
 
     def recycle_bin_count(self) -> int:
         info = _SHQUERYRBINFO(cbSize=ctypes.sizeof(_SHQUERYRBINFO))
@@ -299,13 +351,17 @@ class WindowsPlatform:
         """Types into the focused window as Unicode characters. Never sends Enter or shortcuts."""
         units = text.encode("utf-16-le")
         for i in range(0, len(units), 2):
-            code = int.from_bytes(units[i:i + 2], "little")
+            code = int.from_bytes(units[i : i + 2], "little")
             for flags in (KEYEVENTF_UNICODE, KEYEVENTF_UNICODE | KEYEVENTF_KEYUP):
                 event = _INPUT(type=INPUT_KEYBOARD)
                 event.u.ki = _KEYBDINPUT(0, code, flags, 0, 0)
                 sent = user32.SendInput(1, ctypes.byref(event), ctypes.sizeof(_INPUT))
-                if sent != 1:  # UIPI blocks input to an elevated focused window; don't claim success
-                    raise OSError("keystroke was blocked (the focused window may be running as administrator)")
+                if (
+                    sent != 1
+                ):  # UIPI blocks input to an elevated focused window; don't claim success
+                    raise OSError(
+                        "keystroke was blocked (the focused window may be running as administrator)"
+                    )
 
     def clipboard_get(self) -> str:
         import pyperclip
@@ -327,7 +383,12 @@ class WindowsPlatform:
     def beep(self, kind: str) -> None:
         import winsound
 
-        tones = {"wake": [(880, 90)], "done": [(660, 70)], "error": [(330, 160)], "off": [(520, 80), (390, 120)]}
+        tones = {
+            "wake": [(880, 90)],
+            "done": [(660, 70)],
+            "error": [(330, 160)],
+            "off": [(520, 80), (390, 120)],
+        }
         for freq, ms in tones.get(kind, []):
             winsound.Beep(freq, ms)
 
@@ -410,7 +471,7 @@ class WindowsPlatform:
                 if got == 0:  # WM_QUIT
                     break
                 if got == -1:  # GetMessage error: back off, and give up if it persists
-                    errors += 1                 # (don't busy-spin a core on a stuck message pump)
+                    errors += 1  # (don't busy-spin a core on a stuck message pump)
                     if errors > 20:
                         break
                     time.sleep(0.1)
@@ -421,4 +482,6 @@ class WindowsPlatform:
 
         threading.Thread(target=loop, name="aura-hotkeys", daemon=True).start()
         registered.wait(timeout=3)
-        return {combo: result.get(combo, (None, "registration did not finish")) for combo in bindings}
+        return {
+            combo: result.get(combo, (None, "registration did not finish")) for combo in bindings
+        }

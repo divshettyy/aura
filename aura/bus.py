@@ -1,4 +1,5 @@
 """Event bus: the one channel every part of Aura uses to tell the others what happened."""
+
 from __future__ import annotations
 
 import logging

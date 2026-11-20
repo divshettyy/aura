@@ -44,7 +44,7 @@ def make(hub, transcripts):
 
 def test_wake_word_to_action(hub):
     listener = make(hub, ["Open Notepad."])
-    listener.step(quiet())                       # below threshold: nothing happens
+    listener.step(quiet())  # below threshold: nothing happens
     assert not hub.platform.calls
     listener.wake.score = 0.93
     listener.step(quiet())
@@ -89,7 +89,10 @@ def test_strip_wake_name_split_across_two_tokens():
 
 
 def test_strip_wake_no_match_keeps_text_unchanged():
-    assert strip_wake("Hey, John, miss. What time is it", "hey_jarvis") == (False, "Hey, John, miss. What time is it")
+    assert strip_wake("Hey, John, miss. What time is it", "hey_jarvis") == (
+        False,
+        "Hey, John, miss. What time is it",
+    )
 
 
 def test_deaf_when_muted_locked_or_speaking(hub):
@@ -108,16 +111,31 @@ def test_deaf_when_muted_locked_or_speaking(hub):
 
 
 def test_strip_wake_keeps_ordinary_openings():
-    for said in ("war is over", "jar is empty", "java is slow today", "art is fun", "jay is calling",
-                 "hey car is ready", "ok car is here", "jar wins", "paris weather", "davis cup scores",
-                 "how far is the airport", "service the printer"):
+    for said in (
+        "war is over",
+        "jar is empty",
+        "java is slow today",
+        "art is fun",
+        "jay is calling",
+        "hey car is ready",
+        "ok car is here",
+        "jar wins",
+        "paris weather",
+        "davis cup scores",
+        "how far is the airport",
+        "service the printer",
+    ):
         assert strip_wake(said, "hey_jarvis") == (False, said), said
 
 
 def test_strip_wake_still_takes_misheard_names():
-    for said, rest in (("Jarvis open notepad", "open notepad"), ("Hey Jervis, volume up", "volume up"),
-                       ("hey jarvas what time is it", "what time is it"), ("Jarvus, mute", "mute"),
-                       ("ok jar vis lock the screen", "lock the screen")):
+    for said, rest in (
+        ("Jarvis open notepad", "open notepad"),
+        ("Hey Jervis, volume up", "volume up"),
+        ("hey jarvas what time is it", "what time is it"),
+        ("Jarvus, mute", "mute"),
+        ("ok jar vis lock the screen", "lock the screen"),
+    ):
         assert strip_wake(said, "hey_jarvis") == (True, rest), said
 
 
@@ -128,6 +146,6 @@ def test_noise_floor_ignores_a_repeated_wake_phrase():
 
     listener = Listener.__new__(Listener)
     import collections
+
     listener.recent = collections.deque([40.0] * 20 + [3000.0] * 42, maxlen=62)
     assert listener._floor() < 200
-

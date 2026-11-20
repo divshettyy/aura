@@ -5,6 +5,7 @@ Two interchangeable back-ends:
   ClaudeCliBrain  - the Claude Code CLI in headless mode (uses the user's Claude subscription)
   ApiBrain        - the Anthropic API with an API key
 """
+
 from __future__ import annotations
 
 import atexit
@@ -52,7 +53,13 @@ class _Memory:
         self.items: collections.deque = collections.deque(maxlen=4)
 
     def add(self, request: str, reply: str, tainted: bool) -> None:
-        self.items.append((time.time(), request, "(reply not kept: it was based on external content)" if tainted else reply))
+        self.items.append(
+            (
+                time.time(),
+                request,
+                "(reply not kept: it was based on external content)" if tainted else reply,
+            )
+        )
 
     def recent(self) -> list[dict]:
         cutoff = time.time() - 300
@@ -106,11 +113,25 @@ class _ClaudeProcess:
         self.born = time.monotonic()
         self.lines: queue.Queue = queue.Queue()
         self.errors: collections.deque = collections.deque(maxlen=20)
-        self.proc = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                     text=True, encoding="utf-8", errors="replace", bufsize=1, cwd=cwd, env=env,
-                                     creationflags=flags)
-        threading.Thread(target=self._pump, args=(self.proc.stdout, self.lines.put, True), daemon=True).start()
-        threading.Thread(target=self._pump, args=(self.proc.stderr, self.errors.append, False), daemon=True).start()
+        self.proc = subprocess.Popen(
+            argv,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            bufsize=1,
+            cwd=cwd,
+            env=env,
+            creationflags=flags,
+        )
+        threading.Thread(
+            target=self._pump, args=(self.proc.stdout, self.lines.put, True), daemon=True
+        ).start()
+        threading.Thread(
+            target=self._pump, args=(self.proc.stderr, self.errors.append, False), daemon=True
+        ).start()
 
     @staticmethod
     def _pump(stream, sink, mark_end: bool) -> None:
@@ -158,7 +179,10 @@ class _ClaudeProcess:
                 raise TimeoutError(f"claude did not answer within {timeout:.0f} seconds")
 
     def _stderr(self) -> str:
-        return " ".join(part.strip() for part in self.errors if part.strip())[-300:] or "no error output"
+        return (
+            " ".join(part.strip() for part in self.errors if part.strip())[-300:]
+            or "no error output"
+        )
 
     def close(self) -> None:
         try:
@@ -187,14 +211,27 @@ class ClaudeCliBrain:
     request only pays in full for the few lines that change."""
 
     PERSONA = "You are a JSON-only command planner."
-    ANSWER_FORMAT = ('Answer with ONE JSON object and nothing else: {"say": "<what to speak>", "actions": '
-                     '[{"tool": "<name>", "args": {...}}], "done": true|false}\n'
-                     'Set "done": false only when you need to see the results of these actions before finishing '
-                     '(you will be asked again with the results). When "done" is true, "say" is the final spoken reply.')
+    ANSWER_FORMAT = (
+        'Answer with ONE JSON object and nothing else: {"say": "<what to speak>", "actions": '
+        '[{"tool": "<name>", "args": {...}}], "done": true|false}\n'
+        'Set "done": false only when you need to see the results of these actions before finishing '
+        '(you will be asked again with the results). When "done" is true, "say" is the final spoken reply.'
+    )
     SYSTEM_PROMPT_FILE = "system-prompt.txt"
-    FLAGS = ["-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose",
-             "--tools", "", "--strict-mcp-config", "--no-session-persistence",
-             "--safe-mode", "--disable-slash-commands"]
+    FLAGS = [
+        "-p",
+        "--input-format",
+        "stream-json",
+        "--output-format",
+        "stream-json",
+        "--verbose",
+        "--tools",
+        "",
+        "--strict-mcp-config",
+        "--no-session-persistence",
+        "--safe-mode",
+        "--disable-slash-commands",
+    ]
     SPARE_MAX_AGE = 20 * 60  # seconds; an older idle process is replaced rather than trusted
     _SAFE_VALUE = re.compile(r"[A-Za-z0-9._:/\[\]-]+")
 
@@ -209,7 +246,10 @@ class ClaudeCliBrain:
         self._closed = False
         self._system_written: str | None = None
         if warm is None:  # test runs never start a real Claude in the background
-            warm = bool(hub.cfg["brain"].get("keep_warm", True)) and "PYTEST_CURRENT_TEST" not in os.environ
+            warm = (
+                bool(hub.cfg["brain"].get("keep_warm", True))
+                and "PYTEST_CURRENT_TEST" not in os.environ
+            )
         self.warm = warm
         if warm:
             atexit.register(self.close)
@@ -219,17 +259,26 @@ class ClaudeCliBrain:
     def _option(self, key: str) -> str:
         value = str(self.hub.cfg["brain"].get(key) or "").strip()
         if value and not self._SAFE_VALUE.fullmatch(value):
-            log.warning("brain.%s=%r has characters that are not allowed; it is ignored", key, value)
+            log.warning(
+                "brain.%s=%r has characters that are not allowed; it is ignored", key, value
+            )
             return ""
         return value
 
     def system_prompt(self) -> str:
         """Everything that does not change between requests."""
-        catalogue = [{"tool": t.name, "does": t.description, "args": t.params, "required": list(t.required)}
-                     for t in self.hub.tools.all()]
-        return "\n\n".join([self.PERSONA, RULES,
-                            "TOOLS YOU MAY REQUEST:\n" + json.dumps(catalogue, ensure_ascii=False),
-                            self.ANSWER_FORMAT])
+        catalogue = [
+            {"tool": t.name, "does": t.description, "args": t.params, "required": list(t.required)}
+            for t in self.hub.tools.all()
+        ]
+        return "\n\n".join(
+            [
+                self.PERSONA,
+                RULES,
+                "TOOLS YOU MAY REQUEST:\n" + json.dumps(catalogue, ensure_ascii=False),
+                self.ANSWER_FORMAT,
+            ]
+        )
 
     def _system_prompt_file(self):
         """Write the system prompt into the sandbox (only when it changed) and return its path."""
@@ -248,7 +297,10 @@ class ClaudeCliBrain:
         path = self._system_prompt_file()
         # Claude always starts in the sandbox, so a shell on the other side of WSL finds the file by
         # name; its Windows path would mean nothing there.
-        args = self.FLAGS + ["--system-prompt-file", self.SYSTEM_PROMPT_FILE if through_shell else str(path)]
+        args = self.FLAGS + [
+            "--system-prompt-file",
+            self.SYSTEM_PROMPT_FILE if through_shell else str(path),
+        ]
         model, effort = self._option("claude_model"), self._option("claude_effort")
         if model:
             args += ["--model", model]
@@ -267,7 +319,9 @@ class ClaudeCliBrain:
         return _ClaudeProcess(argv, self.sandbox, env=env)
 
     def _usable(self, proc: _ClaudeProcess | None) -> bool:
-        return proc is not None and proc.alive() and time.monotonic() - proc.born < self.SPARE_MAX_AGE
+        return (
+            proc is not None and proc.alive() and time.monotonic() - proc.born < self.SPARE_MAX_AGE
+        )
 
     def _keep_warm(self) -> None:
         """Background thread: keeps exactly one unused Claude process ready."""
@@ -342,13 +396,16 @@ class ClaudeCliBrain:
 
     def _prompt(self, text: str, steps: list) -> str:
         """The part that changes with every request. The rest is system_prompt()."""
-        return "\n\n".join([
-            "CONTEXT:\n" + json.dumps(self.hub.context(), ensure_ascii=False),
-            "RECENT CONVERSATION:\n" + json.dumps(self.memory.recent(), ensure_ascii=False),
-            "THE USER JUST SAID:\n" + json.dumps(text, ensure_ascii=False),
-            "ACTIONS ALREADY RUN FOR THIS REQUEST, WITH RESULTS:\n" + json.dumps(steps, ensure_ascii=False),
-            "Answer with the one JSON object your instructions describe, and nothing else.",
-        ])
+        return "\n\n".join(
+            [
+                "CONTEXT:\n" + json.dumps(self.hub.context(), ensure_ascii=False),
+                "RECENT CONVERSATION:\n" + json.dumps(self.memory.recent(), ensure_ascii=False),
+                "THE USER JUST SAID:\n" + json.dumps(text, ensure_ascii=False),
+                "ACTIONS ALREADY RUN FOR THIS REQUEST, WITH RESULTS:\n"
+                + json.dumps(steps, ensure_ascii=False),
+                "Answer with the one JSON object your instructions describe, and nothing else.",
+            ]
+        )
 
     def handle(self, text: str, turn: Turn) -> str:
         steps: list = []
@@ -375,14 +432,26 @@ class ClaudeCliBrain:
 def parse_plan(raw: str) -> dict:
     """Strictly validate the model's JSON. Anything malformed becomes a spoken apology, never an action."""
     try:
-        data = json.loads(raw[raw.index("{"): raw.rindex("}") + 1])
+        data = json.loads(raw[raw.index("{") : raw.rindex("}") + 1])
     except ValueError:
-        return {"say": raw.strip()[:400] or "Sorry, I couldn't work that out.", "actions": [], "done": True}
+        return {
+            "say": raw.strip()[:400] or "Sorry, I couldn't work that out.",
+            "actions": [],
+            "done": True,
+        }
     actions = []
     for item in data.get("actions") or []:
-        if isinstance(item, dict) and isinstance(item.get("tool"), str) and isinstance(item.get("args", {}), dict):
+        if (
+            isinstance(item, dict)
+            and isinstance(item.get("tool"), str)
+            and isinstance(item.get("args", {}), dict)
+        ):
             actions.append({"tool": item["tool"], "args": item.get("args") or {}})
-    return {"say": str(data.get("say") or ""), "actions": actions[:8], "done": bool(data.get("done", True))}
+    return {
+        "say": str(data.get("say") or ""),
+        "actions": actions[:8],
+        "done": bool(data.get("done", True)),
+    }
 
 
 # --------------------------------------------------------------------------
@@ -395,16 +464,26 @@ class ApiBrain:
         self.anthropic = anthropic
         self.hub = hub
         self.memory = _Memory()
-        self.client = anthropic.Anthropic(api_key=secrets.get("anthropic_api_key"), max_retries=2,
-                                          timeout=float(hub.cfg["brain"]["timeout_seconds"]))
-        self.tools = [{"name": t.name, "description": t.description, "input_schema": t.schema()}
-                      for t in hub.tools.all()]
+        self.client = anthropic.Anthropic(
+            api_key=secrets.get("anthropic_api_key"),
+            max_retries=2,
+            timeout=float(hub.cfg["brain"]["timeout_seconds"]),
+        )
+        self.tools = [
+            {"name": t.name, "description": t.description, "input_schema": t.schema()}
+            for t in hub.tools.all()
+        ]
 
     def handle(self, text: str, turn: Turn) -> str:
         anthropic = self.anthropic
-        opening = ("CONTEXT:\n" + json.dumps(self.hub.context(), ensure_ascii=False)
-                   + "\n\nRECENT CONVERSATION:\n" + json.dumps(self.memory.recent(), ensure_ascii=False)
-                   + "\n\nTHE USER JUST SAID:\n" + text)
+        opening = (
+            "CONTEXT:\n"
+            + json.dumps(self.hub.context(), ensure_ascii=False)
+            + "\n\nRECENT CONVERSATION:\n"
+            + json.dumps(self.memory.recent(), ensure_ascii=False)
+            + "\n\nTHE USER JUST SAID:\n"
+            + text
+        )
         messages = [{"role": "user", "content": opening}]
         reply = ""
         try:
@@ -423,18 +502,29 @@ class ApiBrain:
                 if response.stop_reason == "refusal":
                     reply = "I can't help with that request."
                     break
-                reply = " ".join(b.text for b in response.content if b.type == "text").strip() or reply
+                reply = (
+                    " ".join(b.text for b in response.content if b.type == "text").strip() or reply
+                )
                 calls = [b for b in response.content if b.type == "tool_use"]
                 if response.stop_reason != "tool_use" or not calls:
                     if response.stop_reason == "max_tokens":
-                        reply = reply or "That answer got too long; please ask for something more specific."
+                        reply = (
+                            reply
+                            or "That answer got too long; please ask for something more specific."
+                        )
                     break
                 messages.append({"role": "assistant", "content": response.content})
                 results = []
                 for call in calls:
                     result = self.hub.run_tool(call.name, call.input, turn)
-                    results.append({"type": "tool_result", "tool_use_id": call.id, "is_error": not result.ok,
-                                    "content": json.dumps(_wrap(result), ensure_ascii=False)})
+                    results.append(
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": call.id,
+                            "is_error": not result.ok,
+                            "content": json.dumps(_wrap(result), ensure_ascii=False),
+                        }
+                    )
                 messages.append({"role": "user", "content": results})
             else:
                 reply = reply or "That took too many steps, so I stopped."
@@ -461,6 +551,13 @@ def choose(hub):
     if provider in ("api", "auto") and secrets.get("anthropic_api_key"):
         return ApiBrain(hub), f"Anthropic API ({hub.cfg['brain']['api_model']})"
     if provider in ("none", "auto"):
-        return None, "built-in phrases only (no language model found)" if provider == "auto" else "built-in phrases only"
-    raise RuntimeError(f"brain.provider is '{provider}' but it is not available "
-                       f"({'claude command not found' if provider == 'claude_cli' else 'no API key stored'})")
+        return (
+            None,
+            "built-in phrases only (no language model found)"
+            if provider == "auto"
+            else "built-in phrases only",
+        )
+    raise RuntimeError(
+        f"brain.provider is '{provider}' but it is not available "
+        f"({'claude command not found' if provider == 'claude_cli' else 'no API key stored'})"
+    )

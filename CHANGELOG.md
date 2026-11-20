@@ -467,3 +467,23 @@ Tests: 67 passed and 1 failed at the start; 89 passed and 1 skipped now. The ski
 ### Not yet tested by hand
 
 Shutdown dialog, the lock test, Ctrl+Alt+M, and a full spoken conversation with the user's own voice.
+
+## 2026-11-20: Termux-to-laptop connection research
+
+Investigated how to connect an Android phone running Termux to the laptop so it can serve as a remote input device for Aura.
+
+Two paths documented:
+
+**Text/terminal path (SSH, zero cost):**
+Install `openssh` in Termux, run `ssh user@192.168.1.X` over shared WiFi. Phone controls the laptop terminal directly — no extra code needed.
+
+**Voice path (audio-over-HTTP):**
+Termux records mic audio with `sounddevice`, POSTs the WAV file to a Flask server on the laptop. Laptop runs Whisper to transcribe, then calls `aura once <text>`. Both devices must be on the same WiFi network. For remote use (phone on mobile data), expose the Flask port with a Cloudflare Tunnel.
+
+No code was written or committed — this was a design/planning session. Next step: decide between SSH text control vs. voice pipeline and implement whichever the user wants.
+
+## 2026-11-20: GitHub discoverability and repository quality pass
+
+Part of a sweep to make the project presentable and easy to find on GitHub. The README was rewritten with a badge row, a feature table, an architecture diagram, a full reference of the built-in tools, and configuration and privacy sections. The repository was given a set of descriptive topics (voice-assistant, windows, python, claude-ai, wake-word, speech-to-text, local-ai, privacy, automation, llm) and made public, after confirming the secret scan was clean and that `.gitignore` keeps `config.yaml`, the downloaded speech and wake-word models, and all `%APPDATA%\Aura` runtime data out of the repository.
+
+This change also added continuous integration and routine-maintenance scaffolding: a GitHub Actions workflow that installs the project and runs the test suite on Windows plus a lint check, a Dependabot configuration for weekly dependency and action updates, an `.editorconfig`, and a pre-commit configuration. Third-party dependencies in `pyproject.toml` were given upper version bounds so a future breaking major release cannot silently break an install. No application code behaviour changed; the test suite stayed at 506 passing and 1 skipped.

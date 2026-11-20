@@ -1,4 +1,5 @@
 """Time, reminders, routines, trusted custom commands and Aura's own controls."""
+
 from __future__ import annotations
 
 import ast
@@ -11,20 +12,44 @@ import time
 from ..tools import CONFIRM, Tool, ToolError
 
 # calculate: plain arithmetic only. The expression is parsed, never executed as code.
-_BINARY = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul, ast.Div: operator.truediv,
-           ast.FloorDiv: operator.floordiv, ast.Mod: operator.mod, ast.Pow: operator.pow}
+_BINARY = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.FloorDiv: operator.floordiv,
+    ast.Mod: operator.mod,
+    ast.Pow: operator.pow,
+}
 _UNARY = {ast.UAdd: operator.pos, ast.USub: operator.neg}
+
+
 def _round(value, digits=0):
     if isinstance(digits, float) and digits.is_integer():
         digits = int(digits)
-    if not isinstance(digits, int) or not -15 <= digits <= 15:  # round(7, -16000000) runs for a minute
+    if (
+        not isinstance(digits, int) or not -15 <= digits <= 15
+    ):  # round(7, -16000000) runs for a minute
         raise ToolError("I can round to at most 15 places")
     return round(value, digits)
 
 
-_FUNCTIONS = {"sqrt": math.sqrt, "abs": abs, "round": _round, "min": min, "max": max, "floor": math.floor,
-              "ceil": math.ceil, "log": math.log, "log10": math.log10, "sin": math.sin, "cos": math.cos,
-              "tan": math.tan, "radians": math.radians, "degrees": math.degrees}
+_FUNCTIONS = {
+    "sqrt": math.sqrt,
+    "abs": abs,
+    "round": _round,
+    "min": min,
+    "max": max,
+    "floor": math.floor,
+    "ceil": math.ceil,
+    "log": math.log,
+    "log10": math.log10,
+    "sin": math.sin,
+    "cos": math.cos,
+    "tan": math.tan,
+    "radians": math.radians,
+    "degrees": math.degrees,
+}
 _CONSTANTS = {"pi": math.pi, "e": math.e}
 _LIMIT = 1e15  # numbers stay small enough that nothing here can take long or fill memory
 
@@ -47,7 +72,9 @@ def reminder_set(hub, text: str, minutes: int = 0, at: str = "") -> str:
             raise ToolError("that time has already passed")
     hub.state.add_reminder(due.timestamp(), text.strip())
     same_day = due.date() == dt.date.today()
-    return f"I'll remind you to {text.strip()} at {due:%H:%M}" + ("" if same_day else f" on {due:%A %d %B}")
+    return f"I'll remind you to {text.strip()} at {due:%H:%M}" + (
+        "" if same_day else f" on {due:%A %d %B}"
+    )
 
 
 def reminders_list(hub) -> str:
@@ -55,11 +82,15 @@ def reminders_list(hub) -> str:
     if not rows:
         return "No reminders pending"
     return "Reminders: " + "; ".join(
-        f"number {rid}, {text}, {dt.datetime.fromtimestamp(due):%a %H:%M}" for rid, due, text in rows)
+        f"number {rid}, {text}, {dt.datetime.fromtimestamp(due):%a %H:%M}"
+        for rid, due, text in rows
+    )
 
 
 def reminder_cancel(hub, id: int) -> str:
-    return "Reminder cancelled" if hub.state.cancel_reminder(id) else "I couldn't find that reminder"
+    return (
+        "Reminder cancelled" if hub.state.cancel_reminder(id) else "I couldn't find that reminder"
+    )
 
 
 def _number(value):
@@ -84,15 +115,22 @@ def _evaluate(node, depth: int = 0):
         if isinstance(node.op, ast.Pow) and (abs(right) > 64 or abs(left) > 1e6):
             raise ToolError("that power is too large for me")
         return _number(_BINARY[type(node.op)](left, right))
-    if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in _FUNCTIONS
-            and not node.keywords and 1 <= len(node.args) <= 8):
+    if (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id in _FUNCTIONS
+        and not node.keywords
+        and 1 <= len(node.args) <= 8
+    ):
         return _number(_FUNCTIONS[node.func.id](*[_evaluate(a, depth + 1) for a in node.args]))
     raise ToolError("I can only do arithmetic: numbers, + - * / % ** and functions like sqrt")
 
 
 def calculate(hub, expression: str) -> str:
     text = expression.strip().replace("^", "**").replace("\u00d7", "*").replace("\u00f7", "/")
-    text = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", text)  # 1,200 -> 1200; "min(3, 4)" keeps its comma
+    text = re.sub(
+        r"(?<=\d),(?=\d{3}(?!\d))", "", text
+    )  # 1,200 -> 1200; "min(3, 4)" keeps its comma
     if not text or len(text) > 200:
         raise ToolError("give me a short calculation")
     try:
@@ -137,9 +175,11 @@ def _span(seconds: float) -> str:
     seconds = int(round(seconds))
     hours, rest = divmod(seconds, 3600)
     minutes, secs = divmod(rest, 60)
-    parts = [f"{hours} hour{'s' if hours != 1 else ''}" if hours else "",
-             f"{minutes} minute{'s' if minutes != 1 else ''}" if minutes else "",
-             f"{secs} second{'s' if secs != 1 else ''}" if secs or not (hours or minutes) else ""]
+    parts = [
+        f"{hours} hour{'s' if hours != 1 else ''}" if hours else "",
+        f"{minutes} minute{'s' if minutes != 1 else ''}" if minutes else "",
+        f"{secs} second{'s' if secs != 1 else ''}" if secs or not (hours or minutes) else "",
+    ]
     return " ".join(p for p in parts if p)
 
 
@@ -180,31 +220,91 @@ def stop_listening(hub) -> str:
 
 
 def capabilities(hub) -> str:
-    return ("I can open and close apps and your websites, search them, control volume, brightness and media, "
-            "lock the laptop, take screenshots, arrange windows, switch dark mode, find and open files, take "
-            "notes, set reminders and timers, run a stopwatch, calculate, work out dates, type what you "
-            "dictate, draft emails and calendar events, and run routines like: " + ", ".join(sorted(hub.cfg["routines"])))
+    return (
+        "I can open and close apps and your websites, search them, control volume, brightness and media, "
+        "lock the laptop, take screenshots, arrange windows, switch dark mode, find and open files, take "
+        "notes, set reminders and timers, run a stopwatch, calculate, work out dates, type what you "
+        "dictate, draft emails and calendar events, and run routines like: "
+        + ", ".join(sorted(hub.cfg["routines"]))
+    )
 
 
 def register(reg) -> None:
     S = {"type": "string"}
     reg.add(Tool("get_time", "Current local time and date.", get_time))
-    reg.add(Tool("reminder_set", "Set a spoken reminder or timer: either 'minutes' from now or 'at' (local ISO time).",
-                 reminder_set, {"text": S, "minutes": {"type": "integer", "minimum": 1, "maximum": 525600}, "at": S},
-                 ("text",)))
-    reg.add(Tool("calculate", "Exact arithmetic: + - * / % **, sqrt, round, min, max, log, sin, pi.", calculate,
-                 {"expression": S}, ("expression",)))
-    reg.add(Tool("date_info", "Weekday of a date (YYYY-MM-DD, default today) and days until it; add_days shifts it.",
-                 date_info, {"date": S, "add_days": {"type": "integer", "minimum": -36500, "maximum": 36500}}))
-    reg.add(Tool("stopwatch", "Start, check or stop a stopwatch.", stopwatch,
-                 {"action": {"type": "string", "enum": ["start", "check", "stop"]}}, ("action",)))
+    reg.add(
+        Tool(
+            "reminder_set",
+            "Set a spoken reminder or timer: either 'minutes' from now or 'at' (local ISO time).",
+            reminder_set,
+            {"text": S, "minutes": {"type": "integer", "minimum": 1, "maximum": 525600}, "at": S},
+            ("text",),
+        )
+    )
+    reg.add(
+        Tool(
+            "calculate",
+            "Exact arithmetic: + - * / % **, sqrt, round, min, max, log, sin, pi.",
+            calculate,
+            {"expression": S},
+            ("expression",),
+        )
+    )
+    reg.add(
+        Tool(
+            "date_info",
+            "Weekday of a date (YYYY-MM-DD, default today) and days until it; add_days shifts it.",
+            date_info,
+            {"date": S, "add_days": {"type": "integer", "minimum": -36500, "maximum": 36500}},
+        )
+    )
+    reg.add(
+        Tool(
+            "stopwatch",
+            "Start, check or stop a stopwatch.",
+            stopwatch,
+            {"action": {"type": "string", "enum": ["start", "check", "stop"]}},
+            ("action",),
+        )
+    )
     reg.add(Tool("reminders_list", "List pending reminders.", reminders_list))
-    reg.add(Tool("reminder_cancel", "Cancel a reminder by its number.", reminder_cancel,
-                 {"id": {"type": "integer"}}, ("id",)))
-    reg.add(Tool("run_routine", "Run one of the user's saved routines by name.", run_routine, {"name": S}, ("name",),
-                 outward=True, confirm="Run the {name} routine?"))
+    reg.add(
+        Tool(
+            "reminder_cancel",
+            "Cancel a reminder by its number.",
+            reminder_cancel,
+            {"id": {"type": "integer"}},
+            ("id",),
+        )
+    )
+    reg.add(
+        Tool(
+            "run_routine",
+            "Run one of the user's saved routines by name.",
+            run_routine,
+            {"name": S},
+            ("name",),
+            outward=True,
+            confirm="Run the {name} routine?",
+        )
+    )
     reg.add(Tool("list_routines", "List saved routines.", list_routines))
-    reg.add(Tool("run_command", "Run one of the user's saved trusted commands by name.", run_command,
-                 {"name": S}, ("name",), risk=CONFIRM, confirm="Run the saved command {name}?"))
-    reg.add(Tool("stop_listening", "Turn Aura's microphone off until the hotkey is pressed.", stop_listening))
+    reg.add(
+        Tool(
+            "run_command",
+            "Run one of the user's saved trusted commands by name.",
+            run_command,
+            {"name": S},
+            ("name",),
+            risk=CONFIRM,
+            confirm="Run the saved command {name}?",
+        )
+    )
+    reg.add(
+        Tool(
+            "stop_listening",
+            "Turn Aura's microphone off until the hotkey is pressed.",
+            stop_listening,
+        )
+    )
     reg.add(Tool("capabilities", "Describe what Aura can do.", capabilities))

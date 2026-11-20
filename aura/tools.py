@@ -1,4 +1,5 @@
 """Tool registry. Every action Aura can take is a declared tool with a risk level."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -22,9 +23,9 @@ class Tool:
     params: dict = field(default_factory=dict)  # JSON-schema "properties"
     required: tuple = ()
     risk: str | Callable[[dict], str] = SAFE
-    outward: bool = False    # can carry information off the laptop or into another app
+    outward: bool = False  # can carry information off the laptop or into another app
     untrusted: bool = False  # result contains content Aura did not author
-    confirm: str = ""        # spoken confirmation, formatted with the arguments
+    confirm: str = ""  # spoken confirmation, formatted with the arguments
 
     def risk_for(self, args: dict) -> str:
         return self.risk(args) if callable(self.risk) else self.risk
@@ -49,13 +50,22 @@ class Tool:
         for key, value in args.items():
             spec = self.params[key]
             expected = _TYPES[spec["type"]]
-            if isinstance(value, bool) and spec["type"] != "boolean" or not isinstance(value, expected):
+            if (
+                isinstance(value, bool)
+                and spec["type"] != "boolean"
+                or not isinstance(value, expected)
+            ):
                 raise ToolError(f"argument '{key}' must be {spec['type']}")
             if "enum" in spec and value not in spec["enum"]:
                 raise ToolError(f"argument '{key}' must be one of {spec['enum']}")
             if isinstance(value, str) and len(value) > MAX_STRING:
                 raise ToolError(f"argument '{key}' is too long")
-            if "minimum" in spec and value < spec["minimum"] or "maximum" in spec and value > spec["maximum"]:
+            if (
+                "minimum" in spec
+                and value < spec["minimum"]
+                or "maximum" in spec
+                and value > spec["maximum"]
+            ):
                 raise ToolError(f"argument '{key}' is out of range")
         return args
 

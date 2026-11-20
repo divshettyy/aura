@@ -8,22 +8,22 @@ version = "1.0.0"
 description = "Voice-controlled, automated, locally-secured laptop assistant for Windows"
 requires-python = ">=3.10"
 dependencies = [
-  "pyyaml>=6",
-  "numpy>=1.24",
-  "psutil>=5.9",
-  "keyring>=24",
-  "anthropic>=2.8",
-  "faster-whisper>=1.0",
-  "openwakeword>=0.6",
-  "onnxruntime>=1.16",
-  "sounddevice>=0.4.6",
+  "pyyaml>=6,<7",
+  "numpy>=1.24,<3",
+  "psutil>=5.9,<8",
+  "keyring>=24,<26",
+  "anthropic>=2.8,<3",
+  "faster-whisper>=1.0,<2",
+  "openwakeword>=0.6,<0.7",
+  "onnxruntime>=1.16,<2",
+  "sounddevice>=0.4.6,<1",
   "pywin32>=306; sys_platform == 'win32'",
   "pycaw>=20230407; sys_platform == 'win32'",
-  "comtypes>=1.2; sys_platform == 'win32'",
-  "screen-brightness-control>=0.22; sys_platform == 'win32'",
-  "pillow>=10; sys_platform == 'win32'",
-  "pyperclip>=1.8; sys_platform == 'win32'",
-  "send2trash>=1.8; sys_platform == 'win32'",
+  "comtypes>=1.2,<2; sys_platform == 'win32'",
+  "screen-brightness-control>=0.22,<1; sys_platform == 'win32'",
+  "pillow>=10,<14; sys_platform == 'win32'",
+  "pyperclip>=1.8,<2; sys_platform == 'win32'",
+  "send2trash>=1.8,<3; sys_platform == 'win32'",
 ]
 
 [project.optional-dependencies]
@@ -40,3 +40,15 @@ aura = ["default_config.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests use lambda stubs and compact one-line setups deliberately.
+"tests/*" = ["E731", "E702", "E741"]

@@ -6,6 +6,7 @@ BRAIN: must NOT be handled by a built-in phrase. These only contain a trigger wo
           action on them would be wrong, so they go to the language model.
 SEVERAL: one sentence, more than one action.
 """
+
 import pytest
 
 T = "get_time"
@@ -46,16 +47,40 @@ MATCH = [
     ("take me to github", "open_site", {"name": "github"}),
     ("hey aura open gmail", "open_site", {"name": "gmail"}),
     # site search
-    ("search for data analyst on linkedin", "search_site", {"site": "linkedin", "query": "data analyst"}),
+    (
+        "search for data analyst on linkedin",
+        "search_site",
+        {"site": "linkedin", "query": "data analyst"},
+    ),
     ("search github for whisper", "search_site", {"site": "github", "query": "whisper"}),
-    ("google python list comprehension", "search_site", {"site": "google", "query": "python list comprehension"}),
+    (
+        "google python list comprehension",
+        "search_site",
+        {"site": "google", "query": "python list comprehension"},
+    ),
     ("look up weather in mumbai", "search_site", {"site": "google", "query": "weather in mumbai"}),
     ("search youtube for lo-fi music", "search_site", {"site": "youtube", "query": "lo-fi music"}),
-    ("ask chatgpt how do i reverse a list", "search_site", {"site": "chatgpt", "query": "how do i reverse a list"}),
-    ("ask claude about rust lifetimes", "search_site", {"site": "claude", "query": "rust lifetimes"}),
+    (
+        "ask chatgpt how do i reverse a list",
+        "search_site",
+        {"site": "chatgpt", "query": "how do i reverse a list"},
+    ),
+    (
+        "ask claude about rust lifetimes",
+        "search_site",
+        {"site": "claude", "query": "rust lifetimes"},
+    ),
     ("please search for whisper on github", "search_site", {"site": "github", "query": "whisper"}),
-    ("find data analyst jobs on linkedin", "search_site", {"site": "linkedin", "query": "data analyst jobs"}),
-    ("search the web for cheap flights", "search_site", {"site": "google", "query": "cheap flights"}),
+    (
+        "find data analyst jobs on linkedin",
+        "search_site",
+        {"site": "linkedin", "query": "data analyst jobs"},
+    ),
+    (
+        "search the web for cheap flights",
+        "search_site",
+        {"site": "google", "query": "cheap flights"},
+    ),
     # volume
     ("volume 40", "volume_set", {"level": 40}),
     ("Volume, 40.", "volume_set", {"level": 40}),
@@ -140,7 +165,11 @@ MATCH = [
     ("make a note to buy milk", "note_add", {"text": "buy milk"}),
     ("write down call the bank", "note_add", {"text": "call the bank"}),
     ("add a note call mom back", "note_add", {"text": "call mom back"}),
-    ("jot down the wifi password is on the fridge", "note_add", {"text": "the wifi password is on the fridge"}),
+    (
+        "jot down the wifi password is on the fridge",
+        "note_add",
+        {"text": "the wifi password is on the fridge"},
+    ),
     ("read my notes", "notes_read", {}),
     ("what are my notes", "notes_read", {}),
     ("read me my notes please", "notes_read", {}),
@@ -148,16 +177,44 @@ MATCH = [
     # reminders and timers
     ("remind me to stretch in 20 minutes", "reminder_set", {"text": "stretch", "minutes": 20}),
     ("Remind me to stretch in twenty minutes.", "reminder_set", {"text": "stretch", "minutes": 20}),
-    ("remind me in ten minutes to check the oven", "reminder_set", {"text": "check the oven", "minutes": 10}),
+    (
+        "remind me in ten minutes to check the oven",
+        "reminder_set",
+        {"text": "check the oven", "minutes": 10},
+    ),
     ("remind me to stretch in half an hour", "reminder_set", {"text": "stretch", "minutes": 30}),
-    ("remind me in an hour to call the bank", "reminder_set", {"text": "call the bank", "minutes": 60}),
-    ("remind me to drink water in two hours", "reminder_set", {"text": "drink water", "minutes": 120}),
-    ("remind me in 2 hours to drink water", "reminder_set", {"text": "drink water", "minutes": 120}),
+    (
+        "remind me in an hour to call the bank",
+        "reminder_set",
+        {"text": "call the bank", "minutes": 60},
+    ),
+    (
+        "remind me to drink water in two hours",
+        "reminder_set",
+        {"text": "drink water", "minutes": 120},
+    ),
+    (
+        "remind me in 2 hours to drink water",
+        "reminder_set",
+        {"text": "drink water", "minutes": 120},
+    ),
     ("remind me to call in 90 seconds", "reminder_set", {"text": "call", "minutes": 2}),
     ("set a reminder to stretch in 20 minutes", "reminder_set", {"text": "stretch", "minutes": 20}),
-    ("remind me to check the oven in an hour and a half", "reminder_set", {"text": "check the oven", "minutes": 90}),
-    ("remind me to send the invoice in 45 mins", "reminder_set", {"text": "send the invoice", "minutes": 45}),
-    ("remind me to stand up in a couple of minutes", "reminder_set", {"text": "stand up", "minutes": 2}),
+    (
+        "remind me to check the oven in an hour and a half",
+        "reminder_set",
+        {"text": "check the oven", "minutes": 90},
+    ),
+    (
+        "remind me to send the invoice in 45 mins",
+        "reminder_set",
+        {"text": "send the invoice", "minutes": 45},
+    ),
+    (
+        "remind me to stand up in a couple of minutes",
+        "reminder_set",
+        {"text": "stand up", "minutes": 2},
+    ),
     ("set a timer for five minutes", "reminder_set", {"minutes": 5}),
     ("timer 10 minutes", "reminder_set", {"minutes": 10}),
     ("start a ten minute timer", "reminder_set", {"minutes": 10}),
@@ -165,12 +222,20 @@ MATCH = [
     ("remind me to call mom at 6 pm", "reminder_set", {"text": "call mom"}),
     ("remind me at 6:30 pm to call mom", "reminder_set", {"text": "call mom"}),
     ("remind me to call mom at six pm", "reminder_set", {"text": "call mom"}),
-    ("remind me to take my medicine at quarter past six", "reminder_set", {"text": "take my medicine"}),
+    (
+        "remind me to take my medicine at quarter past six",
+        "reminder_set",
+        {"text": "take my medicine"},
+    ),
     ("remind me to leave at half past four", "reminder_set", {"text": "leave"}),
     ("remind me to submit the form at 5", "reminder_set", {"text": "submit the form"}),
     ("remind me to call the dentist at 6 p.m.", "reminder_set", {"text": "call the dentist"}),
     ("remind me to pay rent at noon", "reminder_set", {"text": "pay rent"}),
-    ("remind me to water the plants tomorrow morning", "reminder_set", {"text": "water the plants"}),
+    (
+        "remind me to water the plants tomorrow morning",
+        "reminder_set",
+        {"text": "water the plants"},
+    ),
     ("remind me tomorrow at 9 am to call the bank", "reminder_set", {"text": "call the bank"}),
     ("what are my reminders", "reminders_list", {}),
     ("list reminders", "reminders_list", {}),
@@ -204,7 +269,11 @@ MATCH = [
     ("What is 15% of 200?", "calculate", {"expression": "15 / 100 * 200"}),
     ("what is fifteen percent of two hundred", "calculate", {"expression": "15 / 100 * 200"}),
     ("square root of 144", "calculate", {"expression": "sqrt(144)"}),
-    ("what's the square root of one hundred and forty four", "calculate", {"expression": "sqrt(144)"}),
+    (
+        "what's the square root of one hundred and forty four",
+        "calculate",
+        {"expression": "sqrt(144)"},
+    ),
     ("calculate 144 divided by 12", "calculate", {"expression": "144 / 12"}),
     ("how much is three point five times four", "calculate", {"expression": "3.5 * 4"}),
     ("um what is one hundred and five minus twenty", "calculate", {"expression": "105 - 20"}),
@@ -338,24 +407,54 @@ BRAIN = [
 ]
 
 SEVERAL = [
-    ("open notepad and set volume to thirty", [("open_app", {"name": "notepad"}), ("volume_set", {"level": 30})]),
-    ("open github and linkedin", [("open_site", {"name": "github"}), ("open_site", {"name": "linkedin"})]),
-    ("open gmail, github and youtube", [("open_site", {"name": "gmail"}), ("open_site", {"name": "github"}),
-                                        ("open_site", {"name": "youtube"})]),
+    (
+        "open notepad and set volume to thirty",
+        [("open_app", {"name": "notepad"}), ("volume_set", {"level": 30})],
+    ),
+    (
+        "open github and linkedin",
+        [("open_site", {"name": "github"}), ("open_site", {"name": "linkedin"})],
+    ),
+    (
+        "open gmail, github and youtube",
+        [
+            ("open_site", {"name": "gmail"}),
+            ("open_site", {"name": "github"}),
+            ("open_site", {"name": "youtube"}),
+        ],
+    ),
     ("mute and lock the laptop", [("mute", {"on": True}), ("lock_screen", {})]),
-    ("take a screenshot then open notepad", [("screenshot", {}), ("open_app", {"name": "notepad"})]),
-    ("pause the music and remind me to stretch in 20 minutes",
-     [("media", {"action": "play_pause"}), ("reminder_set", {"text": "stretch", "minutes": 20})]),
-    ("set volume to 20 and brightness to 40", [("volume_set", {"level": 20}), ("brightness_set", {"level": 40})]),
-    ("dark mode and start the stopwatch", [("dark_mode", {"on": True}), ("stopwatch", {"action": "start"})]),
-    ("snap left then open notepad", [("window", {"action": "snap_left"}), ("open_app", {"name": "notepad"})]),
+    (
+        "take a screenshot then open notepad",
+        [("screenshot", {}), ("open_app", {"name": "notepad"})],
+    ),
+    (
+        "pause the music and remind me to stretch in 20 minutes",
+        [("media", {"action": "play_pause"}), ("reminder_set", {"text": "stretch", "minutes": 20})],
+    ),
+    (
+        "set volume to 20 and brightness to 40",
+        [("volume_set", {"level": 20}), ("brightness_set", {"level": 40})],
+    ),
+    (
+        "dark mode and start the stopwatch",
+        [("dark_mode", {"on": True}), ("stopwatch", {"action": "start"})],
+    ),
+    (
+        "snap left then open notepad",
+        [("window", {"action": "snap_left"}), ("open_app", {"name": "notepad"})],
+    ),
 ]
 
 # One request that must stay ONE action although it contains "and" or "then".
 WHOLE = [
     ("take a note: buy milk and eggs", "note_add", {"text": "buy milk and eggs"}),
     ("remind me to call mom and dad at 6 pm", "reminder_set", {"text": "call mom and dad"}),
-    ("google salt and pepper chicken", "search_site", {"site": "google", "query": "salt and pepper chicken"}),
+    (
+        "google salt and pepper chicken",
+        "search_site",
+        {"site": "google", "query": "salt and pepper chicken"},
+    ),
     ("type research and development", "type_text", {"text": "research and development"}),
     ("ask claude about cats and dogs", "search_site", {"site": "claude", "query": "cats and dogs"}),
     ("what is one hundred and five plus two", "calculate", {"expression": "105 + 2"}),
@@ -364,13 +463,20 @@ WHOLE = [
 
 
 def _fits(intent, tool, args):
-    return isinstance(intent, tuple) and intent[0] == tool and all(intent[1].get(k) == v for k, v in args.items())
+    return (
+        isinstance(intent, tuple)
+        and intent[0] == tool
+        and all(intent[1].get(k) == v for k, v in args.items())
+    )
 
 
 @pytest.mark.parametrize("said,tool,args", MATCH + WHOLE)
 def test_built_in_phrase(hub, said, tool, args):
     intents = hub.local.match_all(said)
-    assert intents is not None and len(intents) == 1 and _fits(intents[0], tool, args), (said, intents)
+    assert intents is not None and len(intents) == 1 and _fits(intents[0], tool, args), (
+        said,
+        intents,
+    )
 
 
 @pytest.mark.parametrize("said", BRAIN)
@@ -409,7 +515,6 @@ def test_several_actions_all_run(hub):
     assert "launch" in kinds and ("volume", 30) in hub.platform.calls, (reply, hub.platform.calls)
 
 
-
 def test_new_tools_really_run(hub):
     assert hub.handle("what is twelve times twelve").endswith("is 144")
     assert hub.handle("what is fifteen percent of two hundred").endswith("is 30")
@@ -419,37 +524,56 @@ def test_new_tools_really_run(hub):
     assert hub.handle("how long has it been").startswith("Stopwatch at")
     hub.handle("snap left")
     hub.handle("dark mode")
-    assert ("window", "snap_left") in hub.platform.calls and ("dark_mode", True) in hub.platform.calls
-    hub.platform.dialog_answer = False          # emptying the bin is critical: a voice is never enough
+    assert ("window", "snap_left") in hub.platform.calls and (
+        "dark_mode",
+        True,
+    ) in hub.platform.calls
+    hub.platform.dialog_answer = False  # emptying the bin is critical: a voice is never enough
     hub.voice_answer = True
     hub.handle("empty the recycle bin")
     assert not [c for c in hub.platform.calls if c[0] == "empty_recycle_bin"]
 
 
 # ---- found by the second review: each of these fired the wrong action --------------------------
-@pytest.mark.parametrize("said, tool, args", [
-    ("volume up ten", "volume_change", {"delta": 10}),
-    ("turn the volume down twenty", "volume_change", {"delta": -20}),
-    ("volume down 5 percent", "volume_change", {"delta": -5}),
-    ("volume to forty", "volume_set", {"level": 40}),
-    ("brightness down ten", "brightness_change", {"delta": -10}),
-    ("brightness to sixty", "brightness_set", {"level": 60}),
-    ("brighter", "brightness_change", {"delta": 10}),
-    ("dim the screen", "brightness_change", {"delta": -10}),
-    ("find my resume", "files_search", {"query": "resume"}),
-    ("type thank you for your time", "type_text", {"text": "thank you for your time"}),
-    ("let's wrap up", "run_routine", {"name": "wrap up"}),
-    ("put the laptop to sleep", "power", {"action": "sleep"}),
-])
+@pytest.mark.parametrize(
+    "said, tool, args",
+    [
+        ("volume up ten", "volume_change", {"delta": 10}),
+        ("turn the volume down twenty", "volume_change", {"delta": -20}),
+        ("volume down 5 percent", "volume_change", {"delta": -5}),
+        ("volume to forty", "volume_set", {"level": 40}),
+        ("brightness down ten", "brightness_change", {"delta": -10}),
+        ("brightness to sixty", "brightness_set", {"level": 60}),
+        ("brighter", "brightness_change", {"delta": 10}),
+        ("dim the screen", "brightness_change", {"delta": -10}),
+        ("find my resume", "files_search", {"query": "resume"}),
+        ("type thank you for your time", "type_text", {"text": "thank you for your time"}),
+        ("let's wrap up", "run_routine", {"name": "wrap up"}),
+        ("put the laptop to sleep", "power", {"action": "sleep"}),
+    ],
+)
 def test_review_two_still_handled(hub, said, tool, args):
     assert hub.local.match(said) == (tool, args), said
 
 
-@pytest.mark.parametrize("said", [
-    "type o negative", "type two diabetes symptoms", "type c charger", "type a personality",
-    "find nemo", "find my phone", "find the meaning of life", "where is my mind", "where are my keys",
-    "i want to sleep", "can you sleep", "let's play", "volume a",
-])
+@pytest.mark.parametrize(
+    "said",
+    [
+        "type o negative",
+        "type two diabetes symptoms",
+        "type c charger",
+        "type a personality",
+        "find nemo",
+        "find my phone",
+        "find the meaning of life",
+        "where is my mind",
+        "where are my keys",
+        "i want to sleep",
+        "can you sleep",
+        "let's play",
+        "volume a",
+    ],
+)
 def test_review_two_left_to_the_model(hub, said):
     assert hub.local.match(said) is None, said
 
@@ -457,4 +581,3 @@ def test_review_two_left_to_the_model(hub, said):
 def test_twenty_five_is_not_a_clock_time(hub):
     found = hub.local.match("remind me at twenty five to call bob")
     assert found is None or "T20:05" not in str(found)
-
