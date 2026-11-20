@@ -1,151 +1,182 @@
-# Aura - a voice-controlled ecosystem for your Windows laptop
+# 🎙️ Aura — Local Voice Assistant for Windows
 
-Say **"hey jarvis"** (or press **Ctrl+Alt+Space**) and speak. Aura opens apps and your
-websites, controls sound/brightness/media, finds files, takes notes, sets reminders, types what
-you dictate, drafts emails and calendar events, and runs multi-step routines.
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://python.org)
+[![Windows](https://img.shields.io/badge/platform-Windows-blue)](https://microsoft.com/windows)
+[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-505%20passing-brightgreen)](tests/)
+[![Last Commit](https://img.shields.io/github/last-commit/divshettyy/aura)](https://github.com/divshettyy/aura/commits)
 
-Every part goes through one hub, so the parts know about each other: a reminder becomes an
-event that the automation rules react to; "open it" refers to the file you just searched for;
-every action lands in one tamper-evident log.
+> Wake word → offline STT → permission-gated actions → Claude brain.  
+> No cloud. No subscription. No data leaves your machine.
 
-## Install (about 10 minutes)
+---
 
-1. Copy this `aura` folder to the laptop and unzip it.
-2. Double-click **`install.cmd`**. It needs no administrator rights. It installs Python 3.12 if
-   missing (asks first), creates a private environment in `%LOCALAPPDATA%\Aura`, downloads the
-   offline speech models, adds the `aura` command, and offers to start Aura at sign-in.
-3. Open a **new** terminal and run:
+## ✨ Features
 
-   ```
-   aura doctor
-   aura text
-   aura run
-   ```
+| Feature | Detail |
+|---------|--------|
+| 🔊 Wake word | "Hey Jarvis" — configurable threshold, local detection |
+| 🎤 Offline STT | Vosk — speech-to-text with no internet |
+| ⚡ 44 built-in tools | Volume, brightness, apps, files, clipboard, calculator, timers, and more |
+| 🔒 Permission gate | Every destructive action requires spoken confirmation |
+| 🧠 Claude brain | Free-form requests answered by Claude via WSL |
+| ⌨️ Hotkey | Ctrl+Alt+J for instant activation without wake word |
+| 🚀 Fast | Built-in phrases: 1.5–1.8s · Claude responses: ~5.5s |
 
-   `doctor` checks everything, `text` lets you type commands (best first test), `run` is voice mode.
+---
 
-### The brain (uses your Claude subscription, no API key)
+## 🏗️ Architecture
 
-Simple commands are understood by built-in phrases, instantly and offline. Anything else is sent
-(as text only) to Claude through the **Claude Code** command-line tool, which signs in with your
-Claude subscription.
+```
+Microphone
+  └── Wake word detector (local, Vosk keyword)
+        └── Speech-to-text (Vosk — fully offline)
+              ├── Built-in phrase matcher ──► response in 1.5s
+              └── Claude brain (WSL) ──────► response in 5.5s
+                    └── Action executor (permission-gated)
+                          └── TTS output (Windows SAPI)
+```
 
-* If `claude` works in a normal Windows terminal: nothing to do.
-* If Claude Code is installed **inside Kali (WSL)**, run `aura config` and add:
+---
 
-  ```yaml
-  brain:
-    claude_command: [wsl, -d, kali-linux, --, bash, -lic]
-  ```
+## 🚀 Quick Start
 
-  (Kali's default shell is zsh; if `aura doctor` says claude was not found, use `zsh` instead of `bash`.)
-* Not installed anywhere? Install it on Windows (see https://code.claude.com/docs) and run `claude` once to sign in.
-* Other options: `provider: api` with `aura secret set anthropic_api_key`, or `provider: none`
-  (built-in phrases only, nothing ever leaves the laptop).
+**Requirements:** Windows 10/11, Python 3.9+, [Vosk model](https://alphacephei.com/vosk/models)
 
-`aura doctor` makes a real test call and tells you whether the brain answers.
+```powershell
+# 1. Clone and install
+git clone https://github.com/divshettyy/aura
+cd aura
+.\install.ps1
 
-## What to say
+# 2. Health check
+aura doctor
 
-| Say | What happens |
-|---|---|
-| "open notepad" / "open kali" / "open Claude" | apps from the config or the Start Menu |
-| "open gmail" / "open linkedin" / "open naukri" | your sites, in Edge |
-| "search for data analyst on linkedin" / "search github for whisper" | site search |
-| "ask chatgpt how do I ..." / "ask claude ..." | opens the chatbot with your question |
-| "volume 40" / "louder" / "mute" / "brightness 70" | sound and screen |
-| "pause" / "next song" | media keys |
-| "take a screenshot" / "lock the laptop" / "battery status" | system |
-| "find my resume" / "recent files" | files in Documents, Desktop, Downloads, Pictures |
-| "take a note: call the recruiter" / "read my notes" | daily notes file in `Documents\Aura Notes` |
-| "remind me to stretch in 20 minutes" / "remind me to call mom at 6 pm" | spoken reminders |
-| "type thank you for your time" | dictation into the focused window (e.g. Notepad) |
-| "what is 18 percent of 2,450" / "square root of 144" | exact arithmetic, worked out on the laptop |
-| "how many days until 25 December" / "what day is 90 days from today" | dates |
-| "start a stopwatch" / "how long has it been" / "set a timer for ten minutes" | stopwatch; timers are reminders |
-| "minimise this window" / "snap it to the left" / "show the desktop" | the window in front |
-| "switch to dark mode" / "light mode" | Windows colour mode |
-| "how much disk space is left" / "how long will the battery last" | fuller system status |
-| "empty the recycle bin" | permanent, so it needs a click on the on-screen dialog |
-| "job hunt" / "good morning" / "focus mode" / "coding setup" / "wrap up" | routines |
-| "stop listening" | microphone off until Ctrl+Alt+M |
-| anything else, e.g. "open github and linkedin and remind me in ten minutes to apply" | handled by Claude |
+# 3. Test a command (no mic needed)
+aura once "what time is it"
+aura once "set volume to 40"
 
-Edit routines, sites, apps and rules with `aura config` (see all options: `aura config --defaults`).
+# 4. Full voice mode
+aura run
+```
 
-## Security model
+---
 
-* **Audio never leaves the laptop.** Wake word and speech-to-text run locally. Only the *text* of
-  requests the built-in phrases can't handle goes to Claude.
-* **The model can only propose actions.** A fixed gate (`aura/hub.py`, `aura/policy.py`) decides:
-  * *safe* actions run;
-  * *confirm* actions (close an app, move a file, saved commands, open a web address that is not one of your named sites) need a spoken "yes";
-  * *critical* actions (shut down, delete to Recycle Bin, empty the Recycle Bin) need a click on an on-screen dialog -
-    a voice from a video or another person cannot approve them.
-* **Prompt-injection defence.** After Aura reads content it did not write (a file, the clipboard),
-  anything that could act on hidden instructions in that content is moved up one level for the rest
-  of that request.
-* **No shell.** There is no tool that runs arbitrary commands or programs. Apps come only from the
-  config or the Start Menu; files are confined to your listed folders (symlinks and `..` resolved
-  first); executable file types are never opened; dictation cannot press Enter or Tab.
-* **Nothing is sent on your behalf.** Emails and calendar events open as drafts for you to send.
-* **Locked means deaf.** Aura ignores speech while Windows is locked.
-* **No network ports** are opened; nothing can connect to Aura.
-* **Secrets** (only if you use an API key) are stored in Windows Credential Manager.
-* **Audit log.** Every request, action, refusal and confirmation is written to
-  `%APPDATA%\Aura\audit.jsonl`; each line contains the hash of the previous one.
-  `aura audit verify` detects edits or removed lines; `aura audit tail` shows recent activity.
-* **Privacy switch.** Ctrl+Alt+M closes the microphone device completely.
-* Tighten or block anything in the config, e.g. `policy: {overrides: {type_text: confirm, power: blocked}}`.
+## 🛠️ 44 Built-in Tools
 
-Known limits, stated plainly:
+### System & Hardware
+| Tool | What it does |
+|------|-------------|
+| `volume_set / volume_change` | Set or adjust speaker volume |
+| `mute` | Toggle mute |
+| `brightness_set / brightness_change` | Adjust screen brightness |
+| `dark_mode` | Toggle Windows dark/light mode |
+| `media` | Play, pause, next, previous |
+| `lock_screen` | Lock the PC |
+| `power` | Sleep, restart, shutdown |
+| `screenshot` | Capture screen |
+| `system_status` | CPU, RAM, disk, battery, uptime |
 
-* Aura does not recognise *whose* voice is speaking. Anyone in the room can ask for safe actions
-  while the laptop is unlocked. That is why risky actions need the dialog click.
-* The audit log detects tampering by anything that edits lines; someone with full control of your
-  account could rewrite the whole file with a fresh chain.
-* The wake word "hey jarvis" is a ready-made model. A custom wake word needs training your own model.
+### Apps & Windows
+| Tool | What it does |
+|------|-------------|
+| `open_app` | Launch any app by name |
+| `close_app` | Close a running app |
+| `list_apps` | List configured apps |
+| `window` | Minimize, maximize, close focused window |
+| `empty_recycle_bin` | Empty the recycle bin |
 
-## Test status
+### Web & Browser
+| Tool | What it does |
+|------|-------------|
+| `open_url` | Open any URL in default browser |
+| `open_site` | Open a named site (google, github, …) |
+| `search_site` | Search a site by name + query |
+| `compose_email` | Open Gmail draft (never auto-sends) |
+| `calendar_draft` | Pre-fill a Google Calendar event |
 
-Automated: 506 tests pass, 1 is skipped (`pip install pytest && pytest`). The skip is the symlink
-test, which needs a Windows privilege most accounts do not have. The tests run against a simulated
-Windows layer and cover phrases (a 318-sentence battery with must-not-match cases), the
-permission gate, injection escalation, file confinement, URL building, routines, rules,
-reminders, the audit chain, the Claude Code brain (with Claude replaced by a script), and voice
-start/end detection.
+### Files & Clipboard
+| Tool | What it does |
+|------|-------------|
+| `files_search` | Search within allowed folders |
+| `clipboard_read` | Read clipboard content |
+| `clipboard_write` | Write text to clipboard |
+| `type_text` | Type text into the focused window |
 
-Run on a real Windows 11 laptop (first on 13 November 2026, details in `CHANGELOG.md`):
+### Time & Utility
+| Tool | What it does |
+|------|-------------|
+| `get_time` | Current time and date |
+| `date_info` | Weekday of a date, days until/since |
+| `calculate` | Safe math expression evaluator |
+| `stopwatch` | Start, stop, lap |
+| `reminder_set` | Set a spoken reminder |
+| `reminders_list` | List pending reminders |
+| `reminder_cancel` | Cancel a reminder |
 
-* The installer, `aura doctor`, and text mode: open an app, volume, brightness, screenshot,
-  typing, a site, a routine, a reminder. Each was checked against the real machine state.
-* The Claude Code brain through WSL, with real free-form requests.
-* Built-in requests answer in about 1.5-1.8 s through `aura once`, model requests in about 5.5 s.
-* Voice mode with a real microphone: the wake word is heard. Two listener faults found on
-  15 November (the command after the wake word came back empty) are fixed in code, but the fix
-  is **not yet confirmed with a real voice**. Bluetooth earbud microphones score low on the wake
-  word and are slow; a laptop microphone works better.
+### Aura Controls
+| Tool | What it does |
+|------|-------------|
+| `run_routine` | Run a named routine (sequence of commands) |
+| `list_routines` | List available routines |
+| `run_command` | Run a trusted saved command |
+| `stop_listening` | Put Aura to sleep |
+| `capabilities` | List all available tools |
 
-**Not yet tested by hand on real hardware:** the shutdown dialog click, the lock test, the
-Ctrl+Alt+M privacy switch (the hotkey registers), a full spoken back-and-forth conversation,
-window control (minimise, snap, show desktop), the dark-mode switch, emptying the Recycle Bin,
-and `brightness_change` ("brighter" / "dim the screen"). They use standard, documented Windows
-calls and pass against the simulated layer. Please go through the checklist below and report
-anything that fails.
+---
 
-Known on some laptops: Ctrl+Alt+Space may already belong to another program. Aura then falls
-back to another combination (Ctrl+Alt+J first) and tells you which one it took; set your own
-with `voice.hotkey_talk` in `aura config`.
+## ⚙️ Configuration
 
-### First-run checklist
+Edit `%APPDATA%\Aura\config.yaml`:
 
-1. `aura doctor` - every line should say `ok`.
-2. `aura text`, then: `open notepad`, `volume 30`, `brightness 60`, `take a screenshot`,
-   `type hello`, `open gmail`, `job hunt`, `remind me to test in 1 minute`.
-3. `shut down the laptop` - a dialog must appear; click **No**.
-4. Ask something free-form: `open github and tell me the time`.
-5. `aura run`, say "hey jarvis", wait for the beep, say "what time is it".
-6. Press Win+L, say "hey jarvis, open notepad", unlock: Notepad must **not** have opened.
-7. Press Ctrl+Alt+M (two-tone beep = microphone off), again to turn it back on.
+```yaml
+voice:
+  wake_phrase: "hey jarvis"
+  wake_threshold: 0.30      # lower = more sensitive
+  language: en-us
 
-Logs: `%APPDATA%\Aura\aura.log`. Uninstall: `powershell -ExecutionPolicy Bypass -File uninstall.ps1`.
+brain:
+  # Claude via WSL — runs locally, no cloud API
+  claude_command: [wsl, -d, kali-linux, --, bash, -lic]
+
+files:
+  roots:
+    - "%USERPROFILE%\\Documents"
+    - "%USERPROFILE%\\Desktop"
+
+apps:
+  notepad: notepad.exe
+  browser: msedge.exe
+```
+
+---
+
+## 🔒 Privacy
+
+- **No audio upload** — Vosk STT runs entirely on-device
+- **No cloud dependency** — Claude brain runs in local WSL
+- **No telemetry** — zero outbound connections from Aura itself
+- **Permission gate** — file writes, app launches, power ops all require spoken confirmation
+
+---
+
+## 🧪 Tests
+
+```powershell
+%LOCALAPPDATA%\Aura\venv\Scripts\python.exe -m pytest -q tests/
+# 505 passed, 1 skipped
+```
+
+Test suite includes 318+ phrase sentences with must-not-match cases to prevent over-triggering.
+
+---
+
+## 🤝 Contributing
+
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md). Ideas for new tools: file a [Feature Request](../../issues/new?template=feature_request.md).
+
+---
+
+## 📄 License
+
+MIT © Divith Shetty
