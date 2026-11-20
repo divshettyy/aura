@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=84.2.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,26 +8,26 @@ version = "1.0.0"
 description = "Voice-controlled, automated, locally-secured laptop assistant for Windows"
 requires-python = ">=3.10"
 dependencies = [
-  "pyyaml>=6,<7",
-  "numpy>=1.24,<3",
-  "psutil>=5.9,<8",
-  "keyring>=24,<26",
-  "anthropic>=2.8,<3",
-  "faster-whisper>=1.0,<2",
+  "pyyaml>=6.0.3,<7",
+  "numpy>=2.2.6,<3",
+  "psutil>=7.2.2,<8",
+  "keyring>=25.7.0,<26",
+  "anthropic>=2.9.0,<3",
+  "faster-whisper>=1.2.1,<2",
   "openwakeword>=0.6,<0.7",
-  "onnxruntime>=1.16,<2",
-  "sounddevice>=0.4.6,<1",
-  "pywin32>=306; sys_platform == 'win32'",
-  "pycaw>=20230407; sys_platform == 'win32'",
-  "comtypes>=1.2,<2; sys_platform == 'win32'",
-  "screen-brightness-control>=0.22,<1; sys_platform == 'win32'",
-  "pillow>=10,<14; sys_platform == 'win32'",
-  "pyperclip>=1.8,<2; sys_platform == 'win32'",
-  "send2trash>=1.8,<3; sys_platform == 'win32'",
+  "onnxruntime>=1.24.3,<2",
+  "sounddevice>=0.5.6,<1",
+  "pywin32>=312; sys_platform == 'win32'",
+  "pycaw>=20260927; sys_platform == 'win32'",
+  "comtypes>=1.5.0,<2; sys_platform == 'win32'",
+  "screen-brightness-control>=0.27.2,<1; sys_platform == 'win32'",
+  "pillow>=12.3.0,<14; sys_platform == 'win32'",
+  "pyperclip>=1.11.0,<2; sys_platform == 'win32'",
+  "send2trash>=2.2.0,<3; sys_platform == 'win32'",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+dev = ["pytest>=9.2.0"]
 
 [project.scripts]
 aura = "aura.__main__:main"
